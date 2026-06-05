@@ -148,25 +148,45 @@ export default function App() {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let extractedContent = "";
+    const maxPages = Math.min(pdf.numPages, 50); // Limit to first 50 pages to avoid timeout
     
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const items = textContent.items as any[];
-      
-      const lines: Record<number, any[]> = {};
-      items.forEach(item => {
-        const y = Math.round(item.transform[5]); 
-        if (!lines[y]) lines[y] = [];
-        lines[y].push(item);
-      });
-      
-      const sortedY = Object.keys(lines).map(Number).sort((a, b) => b - a);
-      sortedY.forEach(y => {
-        const lineItems = lines[y].sort((a, b) => a.transform[4] - b.transform[4]);
-        extractedContent += lineItems.map(item => item.str).join(" ") + "\n";
-      });
+    for (let i = 1; i <= maxPages; i++) {
+      try {
+        // Update progress message
+        setLoadingMsg(`Scanning PDF documents... (page ${i}/${maxPages})`);
+        
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const items = textContent.items as any[];
+        
+        if (!items || items.length === 0) continue;
+        
+        const lines: Record<number, any[]> = {};
+        items.forEach(item => {
+          const y = Math.round(item.transform[5]); 
+          if (!lines[y]) lines[y] = [];
+          lines[y].push(item);
+        });
+        
+        const sortedY = Object.keys(lines).map(Number).sort((a, b) => b - a);
+        sortedY.forEach(y => {
+          const lineItems = lines[y].sort((a, b) => a.transform[4] - b.transform[4]);
+          extractedContent += lineItems.map(item => item.str).join(" ") + "\n";
+        });
+        
+        // Small delay to prevent blocking
+        await new Promise(resolve => setTimeout(resolve, 10));
+      } catch (pageError) {
+        console.error(`[v0] Error processing page ${i}:`, pageError);
+        // Continue to next page instead of failing
+        continue;
+      }
     }
+    
+    if (maxPages < pdf.numPages) {
+      extractedContent += `\n\n[Note: PDF has ${pdf.numPages} pages, processed first ${maxPages} pages]`;
+    }
+    
     return extractedContent;
   };
 
