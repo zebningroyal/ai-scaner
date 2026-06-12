@@ -77,13 +77,10 @@ const TypingText = ({ text, delay = 0, soundEnabled = false }: { text: string; d
 import { 
   Car, 
   FileText, 
-  Camera, 
   Send, 
   Volume2, 
-  RefreshCw, 
-  AlertCircle,
+  RefreshCw,
   Loader2,
-  ChevronRight,
   User,
   Bot
 } from 'lucide-react';
@@ -106,15 +103,14 @@ export default function App() {
   const [view, setView] = useState<ViewState>('upload');
   const [isBooting, setIsBooting] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Initializing Jarvis systems...');
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [manualText, setManualText] = useState('');
+  const [scannedFile, setScannedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const [scannedFileName, setScannedFileName] = useState('');
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -130,17 +126,17 @@ export default function App() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setPdfFile(e.target.files[0]);
-      setImageFile(null);
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-      setPdfFile(null);
-      const url = URL.createObjectURL(e.target.files[0]);
-      setImagePreview(url);
+      const file = e.target.files[0];
+      setScannedFile(file);
+      setScannedFileName(file.name);
+      
+      // Preview for images
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        setFilePreview(url);
+      } else {
+        setFilePreview(null);
+      }
     }
   };
 
@@ -182,9 +178,9 @@ export default function App() {
     });
   };
 
-  const handleAnalyze = async () => {
-    if (!pdfFile && !imageFile && !manualText.trim()) {
-      alert("Please provide a report, image, or text first, Sir.");
+  const handleScan = async () => {
+    if (!scannedFile) {
+      alert("Please select a file to scan, Sir.");
       return;
     }
 
@@ -195,15 +191,16 @@ export default function App() {
       let context = "";
       let base64Image = undefined;
 
-      if (pdfFile) {
-        setLoadingMsg("Scanning PDF documents...");
-        context = await extractTextFromPdf(pdfFile);
-      } else if (imageFile) {
-        setLoadingMsg("Processing visual scan...");
-        base64Image = await fileToBase64(imageFile);
-        context = "Visual inspection required for attached dashboard photo.";
+      if (scannedFile.type === 'application/pdf') {
+        setLoadingMsg("Scanning PDF document...");
+        context = await extractTextFromPdf(scannedFile);
+      } else if (scannedFile.type.startsWith('image/')) {
+        setLoadingMsg("Processing image scan...");
+        base64Image = await fileToBase64(scannedFile);
+        context = "Visual inspection required for scanned dashboard image.";
       } else {
-        context = manualText;
+        setLoadingMsg("Scanning text document...");
+        context = await scannedFile.text();
       }
 
       setLoadingMsg("Running diagnostic algorithms...");
@@ -287,10 +284,9 @@ export default function App() {
 
   const resetScan = () => {
     setView('upload');
-    setPdfFile(null);
-    setImageFile(null);
-    setImagePreview(null);
-    setManualText('');
+    setScannedFile(null);
+    setFilePreview(null);
+    setScannedFileName('');
     setDiagnosis('');
     setChatHistory([]);
   };
@@ -388,47 +384,48 @@ export default function App() {
                 className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/20 rounded-3xl p-6 shadow-2xl"
               >
                 <div className="text-center mb-8">
-                  <p className="text-slate-300 font-medium">Upload PDF Scan, Dashboard Image, or Paste Text</p>
+                  <p className="text-slate-300 font-medium">Scan Your Car Diagnostic Files</p>
+                  <p className="text-xs text-slate-500 mt-2">Supports PDF reports, dashboard photos, and text files</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-blue-500/30 rounded-2xl cursor-pointer hover:bg-blue-500/5 hover:border-blue-500/50 transition-all group">
-                    <FileText className="w-10 h-10 mb-2 text-blue-400 group-hover:scale-110 transition-transform" />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Report PDF</p>
-                    <input type="file" className="hidden" accept="application/pdf" onChange={handleFileChange} />
-                  </label>
-
-                  <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-blue-500/30 rounded-2xl cursor-pointer hover:bg-blue-500/5 hover:border-blue-500/50 transition-all group">
-                    <Camera className="w-10 h-10 mb-2 text-blue-400 group-hover:scale-110 transition-transform" />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Dashboard Photo</p>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                  </label>
-                </div>
-
-                <div className="h-6 mb-4 text-center">
-                  <p id="selection-status" className="text-xs font-medium text-blue-400 truncate">
-                    {pdfFile ? `📄 PDF Selected: ${pdfFile.name}` : imageFile ? `🖼️ Image Selected: ${imageFile.name}` : ''}
-                  </p>
-                </div>
-
-                <div className="relative group">
-                  <textarea 
-                    value={manualText}
-                    onChange={(e) => setManualText(e.target.value)}
-                    placeholder="Paste scan text manually..." 
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-sm focus:border-blue-500/50 focus:outline-none h-28 text-slate-300 transition-all resize-none"
-                  />
-                  <div className="absolute top-4 right-4 text-slate-600">
-                    <AlertCircle className="w-4 h-4" />
+                <label className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-blue-500/30 rounded-2xl cursor-pointer hover:bg-blue-500/5 hover:border-blue-500/50 transition-all group mb-6">
+                  <div className="text-center">
+                    <FileText className="w-12 h-12 mb-3 text-blue-400 group-hover:scale-110 transition-transform mx-auto" />
+                    <p className="text-sm font-bold text-slate-300 uppercase tracking-wider">Click to Select File</p>
+                    <p className="text-xs text-slate-500 mt-1">PDF • JPG • PNG • TXT</p>
                   </div>
-                </div>
+                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx" onChange={handleFileChange} />
+                </label>
+
+                {scannedFileName && (
+                  <div className="mb-6 p-4 bg-slate-950/50 border border-blue-500/20 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-300 truncate">{scannedFileName}</p>
+                        <p className="text-xs text-slate-500">Ready to scan</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setScannedFile(null);
+                          setScannedFileName('');
+                          setFilePreview(null);
+                        }}
+                        className="text-xs px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-400 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 <button 
-                  onClick={handleAnalyze}
-                  className="w-full mt-8 py-4 rounded-2xl font-bold bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  onClick={handleScan}
+                  disabled={!scannedFile}
+                  className="w-full py-4 rounded-2xl font-bold bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-5 h-5" />
-                  ANALYZE WITH JARVIS
+                  SCAN WITH JARVIS
                 </button>
               </motion.div>
             )}
@@ -478,9 +475,9 @@ export default function App() {
                     </button>
                   </div>
                   
-                  {imagePreview && (
+                  {filePreview && (
                     <div className="mb-6 rounded-2xl overflow-hidden border border-blue-500/20 shadow-lg">
-                      <img src={imagePreview} className="w-full h-48 object-cover" alt="Analyzed car part" />
+                      <img src={filePreview} className="w-full h-48 object-cover" alt="Scanned car diagnostic image" />
                     </div>
                   )}
 
