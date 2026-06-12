@@ -278,6 +278,7 @@ export default function App() {
     
     const source = audioContextRef.current.createBufferSource();
     source.buffer = buffer;
+    source.playbackRate.value = 1.5;
     source.connect(audioContextRef.current.destination);
     source.start();
   };
