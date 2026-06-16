@@ -390,166 +390,264 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-8"
+                className="space-y-12 py-4"
               >
-                {/* Hero Section */}
-                <div className="text-center space-y-6 py-8">
+                {/* Hero Section with Large Text */}
+                <div className="relative">
+                  {/* Decorative background elements */}
                   <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 100, damping: 10 }}
-                    className="inline-block"
-                  >
-                    <div className="relative w-24 h-24 mx-auto mb-4">
-                      <motion.div
-                        animate={{ 
-                          rotate: 360,
-                          scale: [1, 1.1, 1]
-                        }}
-                        transition={{ 
-                          rotate: { duration: 4, repeat: Infinity, ease: "linear" },
-                          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                        }}
-                        className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 blur-lg opacity-40"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-pink-500/20 rounded-full border-2 border-white/20 backdrop-blur-xl flex items-center justify-center">
+                    animate={{ 
+                      top: [0, -20, 0],
+                      opacity: [0.3, 0.5, 0.3]
+                    }}
+                    transition={{ duration: 8, repeat: Infinity }}
+                    className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl pointer-events-none"
+                  />
+                  <motion.div
+                    animate={{ 
+                      bottom: [0, 20, 0],
+                      opacity: [0.2, 0.4, 0.2]
+                    }}
+                    transition={{ duration: 10, repeat: Infinity }}
+                    className="absolute -bottom-32 -left-20 w-80 h-80 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-full blur-3xl pointer-events-none"
+                  />
+
+                  <div className="relative z-10 text-center space-y-8">
+                    {/* Animated icon */}
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 80, damping: 15, delay: 0.1 }}
+                      className="flex justify-center"
+                    >
+                      <div className="relative w-28 h-28">
                         <motion.div
                           animate={{ 
-                            y: [0, -8, 0],
-                            rotate: [0, 5, 0, -5, 0]
+                            rotate: 360,
+                            scale: [1, 1.15, 1]
                           }}
                           transition={{ 
-                            duration: 2.5, 
-                            repeat: Infinity,
-                            ease: "easeInOut"
+                            rotate: { duration: 5, repeat: Infinity, ease: "linear" },
+                            scale: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
                           }}
-                        >
-                          <Car className="w-12 h-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400" />
-                        </motion.div>
+                          className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 blur-2xl opacity-50"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-pink-500/30 rounded-full border-2 border-white/30 backdrop-blur-2xl flex items-center justify-center shadow-2xl">
+                          <motion.div
+                            animate={{ 
+                              y: [0, -10, 0],
+                              rotate: [0, 8, 0, -8, 0]
+                            }}
+                            transition={{ 
+                              duration: 3, 
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          >
+                            <Car className="w-14 h-14 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-pink-300" />
+                          </motion.div>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
+                    </motion.div>
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-                  >
-                    <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent leading-tight">
-                      Your Neural Car Companion
-                    </h2>
-                    <p className="text-slate-400 text-lg mt-4 max-w-lg mx-auto">
-                      Advanced AI diagnostics powered by JARVIS. Scan, analyze, and understand your vehicle like never before.
-                    </p>
-                  </motion.div>
+                    {/* Main Headline */}
+                    <motion.div
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 80 }}
+                      className="space-y-4"
+                    >
+                      <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight">
+                        <span className="block text-slate-100">Understand Your</span>
+                        <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Vehicle Like Never</span>
+                        <span className="block text-slate-100">Before</span>
+                      </h1>
+                      <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+                        Advanced AI diagnostics with JARVIS. Upload your car's diagnostic data, dashboard photos, or scan codes to get instant, intelligent analysis powered by cutting-edge neural networks.
+                      </p>
+                    </motion.div>
 
-                  {/* Stats Grid */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="grid grid-cols-3 gap-3 mt-8"
-                  >
+                    {/* Primary CTA Button */}
+                    <motion.div
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3, type: "spring", stiffness: 80 }}
+                    >
+                      <button
+                        onClick={() => setView('upload')}
+                        className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-bold bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 text-white shadow-2xl shadow-purple-500/50 hover:shadow-3xl hover:shadow-purple-500/60 transition-all hover:scale-105 active:scale-95"
+                      >
+                        <span className="text-lg">Start Scanning Now</span>
+                        <motion.div
+                          animate={{ x: [0, 6, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <ArrowRight className="w-6 h-6" />
+                        </motion.div>
+                      </button>
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Features Showcase - 2 Column */}
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, type: "spring", stiffness: 70 }}
+                  className="grid md:grid-cols-2 gap-6"
+                >
+                  {[
+                    {
+                      icon: FileText,
+                      title: "PDF Report Analysis",
+                      desc: "Upload diagnostic reports and get instant AI-powered insights",
+                      color: "from-blue-500 to-cyan-500"
+                    },
+                    {
+                      icon: Camera,
+                      title: "Image Recognition",
+                      desc: "Dashboard photos analyzed with advanced computer vision",
+                      color: "from-purple-500 to-pink-500"
+                    }
+                  ].map((feature, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ x: idx === 0 ? -40 : 40, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.5 + idx * 0.1 }}
+                      whileHover={{ y: -8 }}
+                      className="group bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 hover:bg-white/15 hover:border-white/40 transition-all"
+                    >
+                      <motion.div
+                        animate={{ rotate: [0, 12, -12, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, delay: idx * 0.3 }}
+                        className={`inline-block p-4 rounded-2xl bg-gradient-to-br ${feature.color} mb-6 shadow-lg`}
+                      >
+                        <feature.icon className="w-8 h-8 text-white" />
+                      </motion.div>
+                      <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-pink-400 transition-all">
+                        {feature.title}
+                      </h3>
+                      <p className="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
+                        {feature.desc}
+                      </p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Capabilities Grid */}
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, type: "spring", stiffness: 70 }}
+                >
+                  <div className="text-center mb-8">
+                    <h2 className="text-3xl md:text-4xl font-black text-white mb-2">JARVIS Capabilities</h2>
+                    <div className="h-1 w-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full mx-auto"></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { icon: Zap, label: "Instant", value: "Analysis" },
-                      { icon: Gauge, label: "Precision", value: "Diagnostics" },
-                      { icon: Sparkles, label: "AI", value: "Powered" }
-                    ].map((stat, idx) => (
+                      { icon: Zap, label: "Instant Results", delay: 0.7 },
+                      { icon: Gauge, label: "Precision AI", delay: 0.75 },
+                      { icon: Sparkles, label: "Neural Analysis", delay: 0.8 },
+                      { icon: RefreshCw, label: "Live Chat", delay: 0.85 }
+                    ].map((item, idx) => (
                       <motion.div
                         key={idx}
-                        initial={{ y: 30, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
                         transition={{
-                          delay: 0.5 + idx * 0.1,
+                          delay: item.delay,
                           type: "spring",
                           stiffness: 100,
                           damping: 12
                         }}
-                        whileHover={{ 
-                          scale: 1.05,
-                          y: -5
-                        }}
-                        className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 hover:bg-white/15 transition-all hover:border-purple-400/50 cursor-default group"
+                        whileHover={{ scale: 1.08, y: -4 }}
+                        className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 text-center hover:border-purple-400/50 hover:bg-white/15 transition-all cursor-default"
                       >
                         <motion.div
-                          animate={{ rotate: [0, 10, -10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
-                          className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 mb-2 flex justify-center group-hover:scale-110 transition-transform"
+                          animate={{ y: [0, -6, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: idx * 0.15 }}
+                          className="flex justify-center mb-3"
                         >
-                          <stat.icon className="w-6 h-6" />
+                          <div className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 group-hover:scale-125 transition-transform">
+                            <item.icon className="w-8 h-8 mx-auto" />
+                          </div>
                         </motion.div>
-                        <p className="text-xs font-bold text-slate-300">{stat.label}</p>
-                        <p className="text-[10px] text-slate-500">{stat.value}</p>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-
-                {/* Features Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 40 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6, type: "spring", stiffness: 80 }}
-                  className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-2xl"
-                >
-                  <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 mb-4 text-center">
-                    What JARVIS Can Do
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { title: "Scan PDF Reports", desc: "Upload diagnostic reports and get instant analysis" },
-                      { title: "Analyze Images", desc: "Dashboard photos processed with advanced vision AI" },
-                      { title: "Manual Input", desc: "Paste diagnostic codes and text for analysis" },
-                      { title: "AI Chat", desc: "Ask follow-up questions about your vehicle's health" }
-                    ].map((feature, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.7 + idx * 0.08 }}
-                        whileHover={{ x: 4 }}
-                        className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all group cursor-default"
-                      >
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: idx * 0.15 }}
-                          className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 mt-1.5"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{feature.title}</p>
-                          <p className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">{feature.desc}</p>
-                        </div>
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          whileHover={{ opacity: 1, x: 0 }}
-                          className="text-purple-400"
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </motion.div>
+                        <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">
+                          {item.label}
+                        </p>
                       </motion.div>
                     ))}
                   </div>
                 </motion.div>
 
-                {/* CTA Button */}
-                <motion.button
-                  onClick={() => setView('upload')}
-                  initial={{ y: 40, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1, type: "spring", stiffness: 100 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-5 rounded-2xl font-bold bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_40px_rgba(236,72,153,0.5)] transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
+                {/* Feature List with Premium Look */}
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 70 }}
+                  className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl"
                 >
-                  <motion.div
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="flex items-center gap-2"
+                  <h3 className="text-2xl font-bold text-white mb-8 text-center">Why Choose JARVIS?</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {[
+                      { num: "1", title: "Multi-Format Support", desc: "PDF reports, car photos, diagnostic codes - we handle it all" },
+                      { num: "2", title: "AI-Powered Insights", desc: "Get intelligent, context-aware analysis of your vehicle's health" },
+                      { num: "3", title: "Interactive Q&A", desc: "Chat with JARVIS neural AI to understand every detail" },
+                      { num: "4", title: "Real-Time Feedback", desc: "Instant diagnostics with zero configuration needed" }
+                    ].map((item, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ x: idx % 2 === 0 ? -20 : 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.85 + idx * 0.08 }}
+                        className="flex gap-4 group"
+                      >
+                        <motion.div
+                          animate={{ scale: [1, 1.15, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
+                          className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-lg group-hover:scale-110 transition-transform shadow-lg"
+                        >
+                          {item.num}
+                        </motion.div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-white text-lg mb-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-pink-400 transition-all">
+                            {item.title}
+                          </h4>
+                          <p className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Secondary CTA */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="text-center pt-6"
+                >
+                  <p className="text-slate-400 mb-6">Ready to experience neural car diagnostics?</p>
+                  <motion.button
+                    onClick={() => setView('upload')}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border-2 border-gradient-to-r from-purple-500 to-pink-500 border-transparent bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/40 hover:to-pink-500/40 text-white transition-all group"
                   >
-                    <span>Start Scanning</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </motion.div>
-                </motion.button>
+                    Begin Analysis
+                    <motion.div
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.div>
+                  </motion.button>
+                </motion.div>
               </motion.div>
             )}
 
