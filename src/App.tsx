@@ -734,96 +734,221 @@ export default function App() {
                 key="result"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="space-y-6"
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 80 }}
+                className="space-y-8"
               >
-                <div className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-2xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 flex items-center gap-2">
-                      <RefreshCw className="w-5 h-5" />
-                      Scan Results
-                    </h2>
-                    <button 
-                      onClick={resetScan}
-                      className="text-[10px] font-bold text-slate-300 hover:text-white uppercase px-3 py-1.5 bg-white/10 rounded-lg transition-colors border border-white/20"
-                    >
-                      New Scan
-                    </button>
+                {/* Header Section */}
+                <motion.div
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex items-center justify-between mb-2"
+                >
+                  <div>
+                    <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      Diagnosis Complete
+                    </h1>
+                    <p className="text-slate-400 text-sm mt-2">JARVIS Neural Analysis Results</p>
                   </div>
-                  
-                  {imagePreview && (
-                    <div className="mb-6 rounded-2xl overflow-hidden border border-white/20 shadow-lg bg-gradient-to-br from-blue-500/10 to-pink-500/10">
-                      <img src={imagePreview} className="w-full h-48 object-cover" alt="Analyzed car part" />
-                    </div>
-                  )}
-
-                  <div className="prose prose-invert prose-sm max-w-none bg-white/5 backdrop-blur-sm p-5 rounded-2xl border-l-4 border-transparent bg-clip-padding border-l-purple-500 mb-6 shadow-inner">
-                    <ReactMarkdown>{diagnosis}</ReactMarkdown>
-                  </div>
-
-                  <button 
-                    onClick={handleTts}
-                    disabled={isTtsLoading}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-pink-500/20 border border-purple-400/50 text-xs font-bold hover:from-blue-500/30 hover:to-pink-500/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                  <motion.button 
+                    onClick={resetScan}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-2 rounded-full font-bold text-white bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/50 hover:from-purple-500/50 hover:to-pink-500/50 transition-all uppercase text-xs tracking-wider"
                   >
-                    {isTtsLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Volume2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    )}
-                    LISTEN TO JARVIS
-                  </button>
+                    New Scan
+                  </motion.button>
+                </motion.div>
 
-                  <div className="mt-8 pt-6 border-t border-white/20">
-                    <p className="text-[10px] text-slate-400 mb-4 uppercase font-black tracking-[0.2em]">✨ Neural Chat Interface</p>
+                {/* Image Preview - Enhanced */}
+                {imagePreview && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="relative group"
+                  >
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-pink-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
+                    <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-2xl bg-gradient-to-br from-blue-500/10 to-pink-500/10">
+                      <img src={imagePreview} className="w-full h-72 object-cover" alt="Analyzed car part" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 to-transparent"></div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Main Diagnosis Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="relative group"
+                >
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                  <div className="relative bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl overflow-hidden">
+                    <motion.div
+                      animate={{ 
+                        backgroundPosition: ['0% 0%', '100% 100%', '0% 0%']
+                      }}
+                      transition={{ duration: 15, repeat: Infinity }}
+                      className="absolute -inset-full bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-blue-500/5 opacity-40"
+                      style={{ backgroundSize: '200% 200%' }}
+                    />
                     
-                    <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                      {chatHistory.map((msg, idx) => (
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-6">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                          className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400"
+                        >
+                          <Sparkles className="w-6 h-6" />
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400">
+                          AI Analysis Report
+                        </h2>
+                      </div>
+
+                      <div className="prose prose-invert prose-sm max-w-none text-slate-200 [&>*]:text-slate-200 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:text-white [&>h1]:mb-3 [&>h1]:mt-4 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:text-white [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:mb-3 [&>li]:mb-1">
+                        <ReactMarkdown>{diagnosis}</ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* TTS Button - Enhanced */}
+                <motion.button 
+                  onClick={handleTts}
+                  disabled={isTtsLoading}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-4 rounded-2xl font-bold bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border-2 border-blue-400/50 text-blue-300 hover:from-blue-500/50 hover:to-cyan-500/50 hover:border-blue-300 transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isTtsLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>JARVIS is Thinking...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-5 h-5 group-hover:scale-125 transition-transform" />
+                      <span>Listen to JARVIS Explanation</span>
+                    </>
+                  )}
+                </motion.button>
+
+                {/* Chat Interface Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl"
+                >
+                  <div className="flex items-center gap-2 mb-6">
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400"
+                    />
+                    <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                      Ask JARVIS Questions
+                    </h3>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-3 custom-scrollbar bg-white/5 rounded-2xl p-4">
+                    {chatHistory.length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-center py-8 text-slate-500"
+                      >
+                        <p className="text-sm">Start asking JARVIS about your vehicle's diagnosis...</p>
+                      </motion.div>
+                    ) : (
+                      chatHistory.map((msg, idx) => (
                         <motion.div 
                           initial={{ opacity: 0, x: msg.role === 'user' ? 10 : -10 }}
                           animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
                           key={idx} 
                           className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                         >
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-pink-500' : 'bg-white/10 border border-purple-400/50'}`}>
-                            {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-purple-400" />}
-                          </div>
-                          <div className={`max-w-[80%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-pink-500 text-white rounded-tr-none' : 'bg-white/10 text-slate-200 rounded-tl-none border border-white/20'}`}>
+                          <motion.div
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: idx * 0.1 }}
+                            className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-pink-500 text-white' : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'}`}
+                          >
+                            {msg.role === 'user' ? 'U' : 'J'}
+                          </motion.div>
+                          <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            className={`max-w-xs p-4 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-none shadow-lg' : 'bg-white/15 text-slate-100 rounded-bl-none border border-white/20'}`}
+                          >
                             {msg.text}
-                          </div>
+                          </motion.div>
                         </motion.div>
-                      ))}
-                      {isChatLoading && (
-                        <div className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-white/10 border border-purple-400/50 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-purple-400" />
-                          </div>
-                          <div className="bg-white/10 p-3 rounded-2xl rounded-tl-none border border-white/20">
-                            <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                          </div>
-                        </div>
-                      )}
-                      <div ref={chatEndRef} />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input 
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
-                        type="text" 
-                        placeholder="e.g. Can I fix this myself?" 
-                        className="flex-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400/50 transition-all placeholder-slate-500" 
-                      />
-                      <button 
-                        onClick={handleChatSend}
-                        disabled={isChatLoading}
-                        className="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all active:scale-90 disabled:opacity-50"
+                      ))
+                    )}
+                    {isChatLoading && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex gap-3"
                       >
-                        <Send className="w-5 h-5" />
-                      </button>
-                    </div>
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-sm text-white">
+                          J
+                        </div>
+                        <div className="bg-white/15 p-4 rounded-2xl rounded-bl-none border border-white/20 flex gap-1">
+                          <motion.div
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{ duration: 0.6, repeat: Infinity }}
+                            className="w-2 h-2 rounded-full bg-purple-400"
+                          />
+                          <motion.div
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{ duration: 0.6, repeat: Infinity, delay: 0.1 }}
+                            className="w-2 h-2 rounded-full bg-pink-400"
+                          />
+                          <motion.div
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                            className="w-2 h-2 rounded-full bg-blue-400"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                    <div ref={chatEndRef} />
                   </div>
-                </div>
+
+                  {/* Chat Input */}
+                  <div className="flex gap-3">
+                    <motion.input 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !isChatLoading && handleChatSend()}
+                      type="text" 
+                      placeholder="Ask me anything about your vehicle..." 
+                      className="flex-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3 text-sm text-slate-100 focus:outline-none focus:border-purple-400/50 focus:bg-white/15 transition-all placeholder-slate-500"
+                      disabled={isChatLoading}
+                    />
+                    <motion.button 
+                      onClick={handleChatSend}
+                      disabled={isChatLoading}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 p-3 rounded-2xl hover:shadow-lg hover:shadow-purple-500/50 transition-all active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                    >
+                      <Send className="w-5 h-5 text-white" />
+                    </motion.button>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
