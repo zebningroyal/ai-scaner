@@ -296,7 +296,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 font-sans selection:bg-blue-500/30 overflow-x-hidden relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-slate-50 font-sans selection:bg-purple-500/30 overflow-x-hidden relative">
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 pointer-events-none"></div>
       <Particles count={80} />
       <AnimatePresence>
         {isBooting && (
@@ -309,7 +310,7 @@ export default function App() {
             
             <div className="flex flex-col items-center">
               <div className="text-center font-mono space-y-8 max-w-2xl">
-                <h2 className="text-blue-400 text-3xl md:text-5xl font-black tracking-widest uppercase leading-tight">
+                <h2 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-3xl md:text-5xl font-black tracking-widest uppercase leading-tight">
                   <TypingText text="WELCOME TO JARVIS WORLD OF CAR" soundEnabled={true} />
                 </h2>
                 
@@ -320,11 +321,11 @@ export default function App() {
                   className="space-y-4"
                 >
                   <div className="flex items-center justify-center gap-4">
-                    <div className="h-[1px] w-12 bg-blue-500/30"></div>
-                    <p className="text-blue-400/60 text-sm tracking-[0.5em] uppercase font-light">
+                    <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-purple-500/30"></div>
+                    <p className="text-purple-400/60 text-sm tracking-[0.5em] uppercase font-light">
                       Neural Link Established
                     </p>
-                    <div className="h-[1px] w-12 bg-blue-500/30"></div>
+                    <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-purple-500/30"></div>
                   </div>
                   <p className="text-slate-600 text-xs uppercase tracking-widest animate-pulse">
                     Accessing secure connection to Shazeb Labs v2.1
@@ -344,27 +345,27 @@ export default function App() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h1 className="text-4xl font-black tracking-tighter text-blue-400 flex items-baseline gap-2">
-                JARVIS <span className="text-white text-xl font-light opacity-50">v2.1</span>
+              <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent flex items-baseline gap-2">
+                JARVIS <span className="text-white/50 text-xl font-light">v2.1</span>
               </h1>
               <div className="text-slate-400 text-xs font-mono mt-1 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-pink-400 animate-pulse"></span>
                 <TypingText text="SYSTEM ACTIVE: NEURAL CAR DIAGNOSTIC" delay={1000} />
               </div>
             </motion.div>
             <motion.div 
               animate={{ 
-                boxShadow: ["0 0 10px rgba(59,130,246,0.2)", "0 0 25px rgba(59,130,246,0.5)", "0 0 10px rgba(59,130,246,0.2)"]
+                boxShadow: ["0 0 20px rgba(99,102,241,0.2)", "0 0 40px rgba(168,85,247,0.4)", "0 0 20px rgba(236,72,153,0.2)"]
               }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="h-14 w-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center overflow-hidden relative group"
+              transition={{ duration: 3, repeat: Infinity }}
+              className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-pink-500/20 border border-purple-500/40 flex items-center justify-center overflow-hidden relative group"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <Car className="w-7 h-7 text-blue-400 relative z-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <Car className="w-7 h-7 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 relative z-10" />
               <motion.div 
                 animate={{ top: ["-100%", "200%"] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="absolute left-0 right-0 h-1 bg-blue-400/50 blur-sm z-20"
+                className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-400 to-transparent blur-sm z-20"
               />
             </motion.div>
           </div>
@@ -373,7 +374,7 @@ export default function App() {
           <motion.div 
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
-            className="absolute -bottom-4 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent origin-left"
+            className="absolute -bottom-4 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/50 to-transparent origin-left"
           />
         </header>
 
@@ -385,28 +386,28 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/20 rounded-3xl p-6 shadow-2xl"
+                className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-2xl"
               >
                 <div className="text-center mb-8">
                   <p className="text-slate-300 font-medium">Upload PDF Scan, Dashboard Image, or Paste Text</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-blue-500/30 rounded-2xl cursor-pointer hover:bg-blue-500/5 hover:border-blue-500/50 transition-all group">
-                    <FileText className="w-10 h-10 mb-2 text-blue-400 group-hover:scale-110 transition-transform" />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Report PDF</p>
+                  <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-purple-400/50 rounded-2xl cursor-pointer hover:bg-purple-500/10 hover:border-purple-400/80 transition-all group bg-white/5 backdrop-blur-sm">
+                    <FileText className="w-10 h-10 mb-2 text-purple-400 group-hover:scale-110 transition-transform" />
+                    <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">Report PDF</p>
                     <input type="file" className="hidden" accept="application/pdf" onChange={handleFileChange} />
                   </label>
 
-                  <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-blue-500/30 rounded-2xl cursor-pointer hover:bg-blue-500/5 hover:border-blue-500/50 transition-all group">
+                  <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-blue-400/50 rounded-2xl cursor-pointer hover:bg-blue-500/10 hover:border-blue-400/80 transition-all group bg-white/5 backdrop-blur-sm">
                     <Camera className="w-10 h-10 mb-2 text-blue-400 group-hover:scale-110 transition-transform" />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Dashboard Photo</p>
+                    <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">Dashboard Photo</p>
                     <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                   </label>
                 </div>
 
                 <div className="h-6 mb-4 text-center">
-                  <p id="selection-status" className="text-xs font-medium text-blue-400 truncate">
+                  <p id="selection-status" className="text-xs font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 truncate">
                     {pdfFile ? `📄 PDF Selected: ${pdfFile.name}` : imageFile ? `🖼️ Image Selected: ${imageFile.name}` : ''}
                   </p>
                 </div>
@@ -416,16 +417,16 @@ export default function App() {
                     value={manualText}
                     onChange={(e) => setManualText(e.target.value)}
                     placeholder="Paste scan text manually..." 
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-sm focus:border-blue-500/50 focus:outline-none h-28 text-slate-300 transition-all resize-none"
+                    className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 text-sm focus:border-purple-400/50 focus:outline-none h-28 text-slate-200 transition-all resize-none placeholder-slate-500"
                   />
-                  <div className="absolute top-4 right-4 text-slate-600">
+                  <div className="absolute top-4 right-4 text-slate-500">
                     <AlertCircle className="w-4 h-4" />
                   </div>
                 </div>
                 
                 <button 
                   onClick={handleAnalyze}
-                  className="w-full mt-8 py-4 rounded-2xl font-bold bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full mt-8 py-4 rounded-2xl font-bold bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_40px_rgba(236,72,153,0.4)] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-5 h-5" />
                   ANALYZE WITH JARVIS
@@ -439,21 +440,21 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/20 rounded-3xl p-12 shadow-2xl text-center"
+                className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-12 shadow-2xl text-center"
               >
                 <div className="relative w-20 h-20 mx-auto mb-8">
-                  <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
                   <motion.div 
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 border-4 border-t-blue-500 rounded-full"
+                    className="absolute inset-0 border-4 border-t-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full border-l-blue-500 border-r-pink-500 border-b-purple-500"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Car className="w-8 h-8 text-blue-400" />
+                    <Car className="w-8 h-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400" />
                   </div>
                 </div>
-                <p className="text-blue-400 font-bold text-lg mb-2 animate-pulse">{loadingMsg}</p>
-                <p className="text-slate-500 text-sm">Accessing neural diagnostic database...</p>
+                <p className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 font-bold text-lg mb-2 animate-pulse">{loadingMsg}</p>
+                <p className="text-slate-400 text-sm">Accessing neural diagnostic database...</p>
               </motion.div>
             )}
 
@@ -464,34 +465,34 @@ export default function App() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="space-y-6"
               >
-                <div className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/20 rounded-3xl p-6 shadow-2xl">
+                <div className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-2xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-blue-400 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 flex items-center gap-2">
                       <RefreshCw className="w-5 h-5" />
                       Scan Results
                     </h2>
                     <button 
                       onClick={resetScan}
-                      className="text-[10px] font-bold text-slate-400 hover:text-white uppercase px-3 py-1.5 bg-slate-800 rounded-lg transition-colors"
+                      className="text-[10px] font-bold text-slate-300 hover:text-white uppercase px-3 py-1.5 bg-white/10 rounded-lg transition-colors border border-white/20"
                     >
                       New Scan
                     </button>
                   </div>
                   
                   {imagePreview && (
-                    <div className="mb-6 rounded-2xl overflow-hidden border border-blue-500/20 shadow-lg">
+                    <div className="mb-6 rounded-2xl overflow-hidden border border-white/20 shadow-lg bg-gradient-to-br from-blue-500/10 to-pink-500/10">
                       <img src={imagePreview} className="w-full h-48 object-cover" alt="Analyzed car part" />
                     </div>
                   )}
 
-                  <div className="prose prose-invert prose-sm max-w-none bg-slate-950/40 p-5 rounded-2xl border-l-4 border-blue-500 mb-6 shadow-inner">
+                  <div className="prose prose-invert prose-sm max-w-none bg-white/5 backdrop-blur-sm p-5 rounded-2xl border-l-4 border-transparent bg-clip-padding border-l-purple-500 mb-6 shadow-inner">
                     <ReactMarkdown>{diagnosis}</ReactMarkdown>
                   </div>
 
                   <button 
                     onClick={handleTts}
                     disabled={isTtsLoading}
-                    className="w-full py-3 rounded-xl bg-blue-600/10 border border-blue-500/30 text-xs font-bold hover:bg-blue-600/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-pink-500/20 border border-purple-400/50 text-xs font-bold hover:from-blue-500/30 hover:to-pink-500/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
                   >
                     {isTtsLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -501,8 +502,8 @@ export default function App() {
                     LISTEN TO JARVIS
                   </button>
 
-                  <div className="mt-8 pt-6 border-t border-slate-800">
-                    <p className="text-[10px] text-slate-500 mb-4 uppercase font-black tracking-[0.2em]">✨ Neural Chat Interface</p>
+                  <div className="mt-8 pt-6 border-t border-white/20">
+                    <p className="text-[10px] text-slate-400 mb-4 uppercase font-black tracking-[0.2em]">✨ Neural Chat Interface</p>
                     
                     <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                       {chatHistory.map((msg, idx) => (
@@ -512,21 +513,21 @@ export default function App() {
                           key={idx} 
                           className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                         >
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-slate-800 border border-blue-500/30'}`}>
-                            {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-blue-400" />}
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-pink-500' : 'bg-white/10 border border-purple-400/50'}`}>
+                            {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-purple-400" />}
                           </div>
-                          <div className={`max-w-[80%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-800/50 text-slate-200 rounded-tl-none border border-slate-700'}`}>
+                          <div className={`max-w-[80%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-pink-500 text-white rounded-tr-none' : 'bg-white/10 text-slate-200 rounded-tl-none border border-white/20'}`}>
                             {msg.text}
                           </div>
                         </motion.div>
                       ))}
                       {isChatLoading && (
                         <div className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-slate-800 border border-blue-500/30 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-blue-400" />
+                          <div className="h-8 w-8 rounded-full bg-white/10 border border-purple-400/50 flex items-center justify-center">
+                            <Bot className="w-4 h-4 text-purple-400" />
                           </div>
-                          <div className="bg-slate-800/50 p-3 rounded-2xl rounded-tl-none border border-slate-700">
-                            <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                          <div className="bg-white/10 p-3 rounded-2xl rounded-tl-none border border-white/20">
+                            <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
                           </div>
                         </div>
                       )}
@@ -540,12 +541,12 @@ export default function App() {
                         onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
                         type="text" 
                         placeholder="e.g. Can I fix this myself?" 
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all" 
+                        className="flex-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400/50 transition-all placeholder-slate-500" 
                       />
                       <button 
                         onClick={handleChatSend}
                         disabled={isChatLoading}
-                        className="bg-blue-600 p-3 rounded-xl hover:bg-blue-500 transition-all active:scale-90 disabled:opacity-50"
+                        className="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all active:scale-90 disabled:opacity-50"
                       >
                         <Send className="w-5 h-5" />
                       </button>
@@ -558,7 +559,7 @@ export default function App() {
         </main>
 
         <footer className="mt-12 text-center">
-          <p className="text-slate-600 text-[10px] uppercase font-bold tracking-[0.3em]">Shazeb Labs • Neural Edition</p>
+          <p className="text-slate-500 text-[10px] uppercase font-bold tracking-[0.3em]">Shazeb Labs • Neural Edition</p>
         </footer>
       </div>
 
@@ -570,11 +571,11 @@ export default function App() {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #1e293b;
+          background: rgba(255,255,255,0.1);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #3b82f6;
+          background: rgba(168,85,247,0.5);
         }
       `}</style>
     </div>
