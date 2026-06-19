@@ -432,7 +432,8 @@ export default function JarvisOBD2Scanner() {
   const [isSpeaking, setIsSpeaking] = useState<string | null>(null)
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   const logsEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -443,6 +444,10 @@ export default function JarvisOBD2Scanner() {
   }, [logs])
 
   useEffect(() => {
+    // Set initial time and mount flag
+    setCurrentTime(new Date())
+    setMounted(true)
+    
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
@@ -677,7 +682,7 @@ export default function JarvisOBD2Scanner() {
             
             <div className="text-right">
               <div className="text-xl font-black text-cyan-400 tracking-wider tabular-nums">
-                {currentTime.toLocaleTimeString()}
+                {mounted && currentTime ? currentTime.toLocaleTimeString() : "-- : -- : --"}
               </div>
               <div className="text-[9px] text-slate-500 uppercase tracking-widest">
                 {currentTime.toLocaleDateString()}
