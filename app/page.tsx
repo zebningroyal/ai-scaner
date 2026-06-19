@@ -584,42 +584,83 @@ export default function JarvisOBD2Scanner() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
     setUploadStatus("uploading")
     setDiagnosticReports([])
     setAiAnalysis(null)
     addLog(`[UPLINK] Processing ${file.name}...`)
 
-    setTimeout(() => {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string
+        
+        // Validate file - check if it contains OBD2 fault codes (P followed by 4 digits)
+        const odbPattern = /[Pp]\d{4}/g
+        const foundCodes = content.match(odbPattern)
+        
+        if (!foundCodes || foundCodes.length === 0) {
+          addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
+          addLog(`[INFO] Valid diagnostic files must contain OBD2 codes (P0xxx format)`)
+          setUploadStatus("complete")
+          setDiagnosticReports([])
+          return
+        }
+
+        // Get unique codes and normalize them
+        const uniqueCodes = Array.from(new Set(foundCodes.map(code => code.toUpperCase())))
+        addLog(`[SUCCESS] ✓ Valid diagnostic file detected`)
+        addLog(`[SCAN] Found ${uniqueCodes.length} unique fault code(s): ${uniqueCodes.join(", ")}`)
+
+        // Create diagnostic reports from found codes
+        const results: DiagnosticReport[] = uniqueCodes.map((code, index) => {
+          // Map common OBD2 codes to issues and urgency
+          const codeMap: Record<string, { issue: string; urgency: string; hinglish: string; checklist: string[] }> = {
+            "P0300": { issue: "Random Misfire", urgency: "CRITICAL", hinglish: "Sir, engine missing hai. Spark plugs aur ignition coils check kariye. Ye problem fuel delivery ya compression issue ki wajah se bhi ho sakti hai.", checklist: ["Plugs", "Coils", "Fuel Injectors"] },
+            "P0301": { issue: "Cylinder 1 Misfire", urgency: "CRITICAL", hinglish: "Cylinder 1 mein misfire ho raha hai. Spark plug, ignition coil, ya fuel injector check kariye.", checklist: ["Spark Plug", "Coil", "Injector"] },
+            "P0420": { issue: "Catalyst System Efficiency Below Threshold", urgency: "HIGH", hinglish: "Catalytic converter choke ho sakta hai ya efficiency kam ho gayi hai. Pehle O2 sensors check kariye.", checklist: ["O2 Sensor", "Cat Converter", "Exhaust"] },
+            "P0115": { issue: "Engine Coolant Temperature Sensor Circuit", urgency: "HIGH", hinglish: "Temperature sensor ki wiring check kariye, connection loose lag raha hai. Sensor bhi kharab ho sakta hai.", checklist: ["Check Pins", "Sensor", "Wiring"] },
+            "P0101": { issue: "Mass or Volume Air Flow Circuit Range/Performance", urgency: "MEDIUM", hinglish: "MAF sensor ko clean kariye ya replace kariye. Hawa ki supply check kariye.", checklist: ["MAF Sensor", "Air Filter", "Intake"] },
+            "P0171": { issue: "System Too Lean", urgency: "HIGH", hinglish: "Engine ka fuel mixture bahut patla hai. Oxygen sensor, fuel injector, ya fuel pressure check kariye.", checklist: ["O2 Sensor", "Fuel Injector", "Pressure"] },
+            "P0128": { issue: "Coolant Thermostat", urgency: "MEDIUM", hinglish: "Thermostat theek se kaam nahi kar raha. Engine temperature fluctuate ho raha hai.", checklist: ["Thermostat", "Coolant Level", "Fan"] },
+            "P0134": { issue: "O2 Sensor Circuit No Activity", urgency: "HIGH", hinglish: "Oxygen sensor kaam nahi kar raha. Sensor ko replace kariye ya wiring check kariye.", checklist: ["O2 Sensor", "Wiring", "Connector"] },
+          }
+
+          const defaultIssue = { 
+            issue: `OBD2 Fault Code ${code}`, 
+            urgency: "MEDIUM", 
+            hinglish: `Diagnostic fault code ${code} detected. Professional diagnosis required.`,
+            checklist: ["Scan Tool", "Professional Service"]
+          }
+
+          const codeInfo = codeMap[code] || defaultIssue
+
+          return {
+            id: index + 1,
+            code,
+            issue: codeInfo.issue,
+            hinglish: codeInfo.hinglish,
+            checklist: codeInfo.checklist,
+            urgency: codeInfo.urgency,
+          }
+        })
+
+        setDiagnosticReports(results)
+        setUploadStatus("complete")
+        addLog(`[ANALYSIS] Starting AI analysis of ${results.length} fault code(s)...`)
+        runAiAnalysis(results.map((r) => r.code))
+      } catch (error) {
+        addLog(`[ERROR] File reading failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+        setUploadStatus("complete")
+      }
+    }
+
+    reader.onerror = () => {
+      addLog(`[ERROR] Failed to read file`)
       setUploadStatus("complete")
-      const results: DiagnosticReport[] = [
-        {
-          id: 1,
-          code: "P0300",
-          issue: "Random Misfire",
-          hinglish: "Sir, engine missing hai. Spark plugs aur ignition coils check kariye. Ye problem fuel delivery ya compression issue ki wajah se bhi ho sakti hai.",
-          checklist: ["Plugs", "Coils"],
-          urgency: "CRITICAL",
-        },
-        {
-          id: 2,
-          code: "P0420",
-          issue: "Catalyst System Efficiency Below Threshold",
-          hinglish: "Catalytic converter choke ho sakta hai ya efficiency kam ho gayi hai. Pehle O2 sensors check kariye, agar wo theek hain toh converter replace karna padega.",
-          checklist: ["O2 Sensor", "Cat Converter"],
-          urgency: "MEDIUM",
-        },
-        {
-          id: 3,
-          code: "P0115",
-          issue: "Engine Coolant Temperature Sensor Circuit",
-          hinglish: "Temperature sensor ki wiring check kariye, connection loose lag raha hai. Sensor bhi kharab ho sakta hai. ECU ko sahi temp reading nahi mil rahi.",
-          checklist: ["Check Pins", "Sensor", "Wiring"],
-          urgency: "HIGH",
-        },
-      ]
-      setDiagnosticReports(results)
-      runAiAnalysis(results.map((r) => r.code))
-    }, 1200)
+    }
+
+    reader.readAsText(file)
   }
 
   const getSeverityColor = (urgency: string) => {
