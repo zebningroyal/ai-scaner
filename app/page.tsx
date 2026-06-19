@@ -602,8 +602,9 @@ export default function JarvisOBD2Scanner() {
         if (!foundCodes || foundCodes.length === 0) {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
           addLog(`[INFO] Valid diagnostic files must contain OBD2 codes (P0xxx format)`)
-          setUploadStatus("complete")
+          setUploadStatus("idle")
           setDiagnosticReports([])
+          setAiAnalysis(null)
           return
         }
 
@@ -651,13 +652,17 @@ export default function JarvisOBD2Scanner() {
         runAiAnalysis(results.map((r) => r.code))
       } catch (error) {
         addLog(`[ERROR] File reading failed: ${error instanceof Error ? error.message : "Unknown error"}`)
-        setUploadStatus("complete")
+        setUploadStatus("idle")
+        setDiagnosticReports([])
+        setAiAnalysis(null)
       }
     }
 
     reader.onerror = () => {
       addLog(`[ERROR] Failed to read file`)
-      setUploadStatus("complete")
+      setUploadStatus("idle")
+      setDiagnosticReports([])
+      setAiAnalysis(null)
     }
 
     reader.readAsText(file)
@@ -795,11 +800,19 @@ export default function JarvisOBD2Scanner() {
             <Panel title="Data Uplink" icon={Upload}>
               <div
                 className={`relative border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
-                  uploadStatus === "complete"
+                  uploadStatus === "uploading"
+                    ? "border-cyan-400/50 bg-cyan-500/10 animate-pulse"
+                    : uploadStatus === "complete" && diagnosticReports.length > 0
                     ? "border-green-500/50 bg-green-500/5"
+                    : uploadStatus === "complete" && diagnosticReports.length === 0
+                    ? "border-red-500/50 bg-red-500/5"
                     : "border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-400/50 hover:bg-cyan-500/10"
                 }`}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (uploadStatus !== "uploading") {
+                    fileInputRef.current?.click()
+                  }
+                }}
               >
                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
                 
@@ -809,13 +822,24 @@ export default function JarvisOBD2Scanner() {
                       <div className="absolute inset-0 border-4 border-cyan-400/30 rounded-full" />
                       <div className="absolute inset-0 border-4 border-cyan-400 rounded-full border-t-transparent animate-spin" />
                     </div>
-                    <span className="text-xs text-cyan-400 font-bold uppercase tracking-widest">Processing...</span>
+                    <span className="text-xs text-cyan-400 font-bold uppercase tracking-widest">Scanning File...</span>
+                    <span className="text-[10px] text-slate-500 mt-2">Validating diagnostic data</span>
                   </>
                 ) : uploadStatus === "complete" ? (
                   <>
-                    <ShieldCheck size={48} className="text-green-400 mb-4" />
-                    <span className="text-xs text-green-400 font-bold uppercase tracking-widest">Data Synced</span>
-                    <span className="text-[10px] text-slate-500 mt-1">{diagnosticReports.length} Codes Detected</span>
+                    {diagnosticReports.length > 0 ? (
+                      <>
+                        <ShieldCheck size={48} className="text-green-400 mb-4" />
+                        <span className="text-xs text-green-400 font-bold uppercase tracking-widest">Data Synced</span>
+                        <span className="text-[10px] text-green-400/70 mt-1">{diagnosticReports.length} Code{diagnosticReports.length !== 1 ? "s" : ""} Detected</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert size={48} className="text-red-400 mb-4 animate-pulse" />
+                        <span className="text-xs text-red-400 font-bold uppercase tracking-widest">Invalid File</span>
+                        <span className="text-[10px] text-red-400/70 mt-1">No OBD2 codes found</span>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
