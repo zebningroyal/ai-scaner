@@ -685,7 +685,7 @@ export default function JarvisOBD2Scanner() {
                 {mounted && currentTime ? currentTime.toLocaleTimeString() : "-- : -- : --"}
               </div>
               <div className="text-[9px] text-slate-500 uppercase tracking-widest">
-                {currentTime.toLocaleDateString()}
+                {mounted && currentTime ? currentTime.toLocaleDateString() : "-- / -- / --"}
               </div>
             </div>
           </div>

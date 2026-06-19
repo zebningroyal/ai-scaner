@@ -4,8 +4,9 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
 // Models to try in order (fallback chain)
 const ANALYSIS_MODELS = [
-  "gemini-1.5-flash",
+  "gemini-2.0-flash",
   "gemini-1.5-pro",
+  "gemini-pro",
 ]
 
 async function callGeminiWithRetry(
@@ -33,8 +34,8 @@ async function callGeminiWithRetry(
       if (result.error) {
         console.error(`[v0] Model ${model} error:`, result.error.message)
         
-        // If rate limited, try next model
-        if (result.error.code === 429) {
+        // If rate limited or not found, try next model
+        if (result.error.code === 429 || result.error.code === 404) {
           continue
         }
         
