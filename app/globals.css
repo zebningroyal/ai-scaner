@@ -1,0 +1,288 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* JARVIS Cyberpunk Dark Theme */
+  --background: oklch(0.08 0.02 240);
+  --foreground: oklch(0.85 0.05 200);
+  --card: oklch(0.12 0.025 240);
+  --card-foreground: oklch(0.9 0.04 200);
+  --popover: oklch(0.1 0.02 240);
+  --popover-foreground: oklch(0.9 0.04 200);
+  --primary: oklch(0.75 0.18 195);
+  --primary-foreground: oklch(0.1 0.02 240);
+  --secondary: oklch(0.2 0.03 240);
+  --secondary-foreground: oklch(0.85 0.05 200);
+  --muted: oklch(0.18 0.025 240);
+  --muted-foreground: oklch(0.6 0.04 200);
+  --accent: oklch(0.65 0.2 180);
+  --accent-foreground: oklch(0.1 0.02 240);
+  --destructive: oklch(0.55 0.25 25);
+  --destructive-foreground: oklch(0.95 0 0);
+  --border: oklch(0.3 0.08 200);
+  --input: oklch(0.15 0.02 240);
+  --ring: oklch(0.7 0.18 195);
+  --chart-1: oklch(0.75 0.18 195);
+  --chart-2: oklch(0.65 0.15 160);
+  --chart-3: oklch(0.55 0.2 25);
+  --chart-4: oklch(0.7 0.2 85);
+  --chart-5: oklch(0.6 0.18 300);
+  --radius: 0.5rem;
+  
+  /* Custom JARVIS colors */
+  --jarvis-cyan: oklch(0.78 0.18 195);
+  --jarvis-blue: oklch(0.55 0.2 250);
+  --jarvis-glow: oklch(0.7 0.15 195);
+  --jarvis-dark: oklch(0.06 0.02 240);
+  --jarvis-panel: oklch(0.1 0.03 230);
+  --jarvis-warning: oklch(0.75 0.2 85);
+  --jarvis-danger: oklch(0.6 0.25 25);
+  --jarvis-success: oklch(0.65 0.2 145);
+}
+
+.dark {
+  --background: oklch(0.08 0.02 240);
+  --foreground: oklch(0.85 0.05 200);
+  --card: oklch(0.12 0.025 240);
+  --card-foreground: oklch(0.9 0.04 200);
+  --popover: oklch(0.1 0.02 240);
+  --popover-foreground: oklch(0.9 0.04 200);
+  --primary: oklch(0.75 0.18 195);
+  --primary-foreground: oklch(0.1 0.02 240);
+  --secondary: oklch(0.2 0.03 240);
+  --secondary-foreground: oklch(0.85 0.05 200);
+  --muted: oklch(0.18 0.025 240);
+  --muted-foreground: oklch(0.6 0.04 200);
+  --accent: oklch(0.65 0.2 180);
+  --accent-foreground: oklch(0.1 0.02 240);
+  --destructive: oklch(0.55 0.25 25);
+  --destructive-foreground: oklch(0.95 0 0);
+  --border: oklch(0.3 0.08 200);
+  --input: oklch(0.15 0.02 240);
+  --ring: oklch(0.7 0.18 195);
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* JARVIS custom colors */
+  --color-jarvis-cyan: var(--jarvis-cyan);
+  --color-jarvis-blue: var(--jarvis-blue);
+  --color-jarvis-glow: var(--jarvis-glow);
+  --color-jarvis-dark: var(--jarvis-dark);
+  --color-jarvis-panel: var(--jarvis-panel);
+  --color-jarvis-warning: var(--jarvis-warning);
+  --color-jarvis-danger: var(--jarvis-danger);
+  --color-jarvis-success: var(--jarvis-success);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* JARVIS Custom Animations & Effects */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px var(--jarvis-cyan), 0 0 10px var(--jarvis-cyan), 0 0 15px var(--jarvis-cyan);
+    opacity: 1;
+  }
+  50% { 
+    box-shadow: 0 0 10px var(--jarvis-cyan), 0 0 20px var(--jarvis-cyan), 0 0 30px var(--jarvis-cyan);
+    opacity: 0.8;
+  }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.95; }
+  75% { opacity: 0.98; }
+}
+
+@keyframes data-stream {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes hologram {
+  0% { 
+    transform: translateY(0) scaleY(1);
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    transform: translateY(-1px) scaleY(1.01);
+  }
+  50% { 
+    transform: translateY(1px) scaleY(0.99);
+    filter: hue-rotate(5deg);
+  }
+  75% { 
+    transform: translateY(-0.5px) scaleY(1.005);
+  }
+  100% { 
+    transform: translateY(0) scaleY(1);
+    filter: hue-rotate(0deg);
+  }
+}
+
+.jarvis-scanline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--jarvis-cyan), transparent);
+  animation: scanline 4s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.jarvis-panel {
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.05) 0%, rgba(6, 182, 212, 0.02) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.jarvis-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.8), transparent);
+}
+
+.jarvis-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+}
+
+.jarvis-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.jarvis-flicker {
+  animation: flicker 0.1s infinite;
+}
+
+.jarvis-hologram {
+  animation: hologram 3s ease-in-out infinite;
+}
+
+.jarvis-border-flow {
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent);
+  background-size: 200% 100%;
+  animation: border-flow 3s linear infinite;
+}
+
+.jarvis-grid-bg {
+  background-image: 
+    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.jarvis-hex-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%2306b6d4' stroke-width='0.5' stroke-opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* Glowing text effect */
+.jarvis-text-glow {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.3), 0 0 30px rgba(6, 182, 212, 0.2);
+}
+
+/* HUD corner brackets */
+.jarvis-corners::before,
+.jarvis-corners::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: rgba(6, 182, 212, 0.6);
+  border-style: solid;
+}
+
+.jarvis-corners::before {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+}
+
+.jarvis-corners::after {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(6, 182, 212, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.5);
+}
