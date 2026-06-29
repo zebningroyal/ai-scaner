@@ -594,68 +594,56 @@ export default function JarvisOBD2Scanner() {
     reader.onload = (event) => {
       try {
         const content = event.target?.result as string
-        addLog(`[DEBUG] File size: ${content.length} bytes`)
         
-        // Try to find any P followed by 4 digits in original content (case insensitive)
-        // This is the most flexible approach
-        let foundCodes: string[] = []
+        // Intelligent scanner to find OBD2 codes anywhere in the file
+        // OBD2 codes are always: P (or U, C, B) followed by 4 digits (0-3 for first digit after letter)
+        let allMatches: string[] = []
         
-        // Look for P0xxx, P1xxx, P2xxx, P3xxx (any P code format)
-        const matches = content.match(/[Pp][0-3]\d{3}/g) || []
-        if (matches.length > 0) {
-          foundCodes = matches.map(code => code.toUpperCase())
-          addLog(`[FOUND] Detected ${foundCodes.length} codes with pattern P[0-3]xxx`)
-        }
+        // Pattern 1: Standard OBD2 codes P0000-P3999 (most common)
+        const pattern1 = content.match(/\b[Pp][0-3]\d{3}\b/g) || []
+        allMatches.push(...pattern1)
         
-        // If no matches, try looking for just P followed by any 4 digits
-        if (foundCodes.length === 0) {
-          const broadMatches = content.match(/[Pp]\d{4}/g) || []
-          if (broadMatches.length > 0) {
-            foundCodes = broadMatches.map(code => code.toUpperCase())
-            addLog(`[FOUND] Detected ${foundCodes.length} codes with pattern Pxxxx`)
-          }
-        }
+        // Pattern 2: Codes with separators (P-0300, P:0300, P 0300)
+        const pattern2 = content.match(/\b[Pp][\s\-:]*[0-3][\s\-:]*\d[\s\-:]*\d[\s\-:]*\d\b/g) || []
+        allMatches.push(...pattern2.map(m => 'P' + m.replace(/[^0-9]/g, '').substring(0, 4)))
         
-        // If still no matches, try with spaces or separators
-        if (foundCodes.length === 0) {
-          const spaceMatches = content.match(/[Pp]\s*[0-3]\s*\d\s*\d\s*\d/g) || []
-          if (spaceMatches.length > 0) {
-            foundCodes = spaceMatches.map(code => 'P' + code.replace(/[^0-9]/g, '').substring(0, 4))
-            addLog(`[FOUND] Detected ${foundCodes.length} codes with spaces`)
-          }
-        }
+        // Pattern 3: Any P code format in parentheses or brackets like (P0300), [P0420]
+        const pattern3 = content.match(/[(\[]*[Pp][0-3]\d{3}[)\]]*/g) || []
+        allMatches.push(...pattern3.map(m => m.replace(/[^\w]/g, '').substring(0, 5)))
+        
+        // Pattern 4: Codes in lists like "1. P0300" or "- P0420" or "• P0115"
+        const pattern4 = content.match(/[\d\.\-\*•\s]+([Pp][0-3]\d{3})/g) || []
+        allMatches.push(...pattern4.map(m => m.match(/[Pp][0-3]\d{3}/)?.[0] || ''))
+        
+        // Pattern 5: Codes followed by descriptions "P0300 Random Misfire" or "P0420: Catalyst"
+        const pattern5 = content.match(/[Pp][0-3]\d{3}(?=\s|:|$|-)/g) || []
+        allMatches.push(...pattern5)
+        
+        // Normalize: convert to uppercase, remove non-code characters, filter valid codes
+        let foundCodes = allMatches
+          .map(code => {
+            const normalized = code.replace(/[^\w]/g, '').substring(0, 5).toUpperCase()
+            return normalized.match(/^P\d{4}$/) ? normalized : ''
+          })
+          .filter(code => code.length > 0)
         
         // Remove duplicates
         foundCodes = Array.from(new Set(foundCodes))
         
-        if (!foundCodes || foundCodes.length === 0) {
+        // If we found codes, log success and proceed
+        if (foundCodes.length > 0) {
+          addLog(`[SUCCESS] ✓ Diagnostic file scanned`)
+          addLog(`[SCAN] Found ${foundCodes.length} fault code(s): ${foundCodes.join(", ")}`)
+        } else {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
           addLog(`[INFO] File should contain codes like: P0300, P0420, P0115`)
-          // Show file content for debugging
-          const preview = content.substring(0, 500).split('\n').slice(0, 5).join(' | ')
-          addLog(`[DEBUG] File preview: ${preview}`)
-          setUploadStatus("idle")
-          setDiagnosticReports([])
-          setAiAnalysis(null)
-          return
-        }
-        
-        addLog(`[SUCCESS] ✓ Codes found: ${foundCodes.join(", ")}`)
-        
-        if (!foundCodes || foundCodes.length === 0) {
-          addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
-          addLog(`[INFO] File should contain codes like: P0300, P0420, P0115, etc.`)
           setUploadStatus("idle")
           setDiagnosticReports([])
           setAiAnalysis(null)
           return
         }
 
-        // Get unique codes and normalize them
-        const uniqueCodes = Array.from(new Set(foundCodes.map(code => code.toUpperCase()).filter(c => c.startsWith('P'))))
-        addLog(`[SUCCESS] ✓ Valid diagnostic file detected`)
-        addLog(`[SCAN] Found ${uniqueCodes.length} error code(s): ${uniqueCodes.join(", ")}`)
-
+        // Create diagnostic reports from found codes
         // Comprehensive OBD2 code to meaning map with Hinglish descriptions
         const codeMap: Record<string, { issue: string; urgency: string; hinglish: string; checklist: string[] }> = {
           // Fuel and Air Metering
