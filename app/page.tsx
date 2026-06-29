@@ -660,20 +660,76 @@ export default function JarvisOBD2Scanner() {
 
         // Comprehensive OBD2 code to meaning map with Hinglish descriptions
         const codeMap: Record<string, { issue: string; urgency: string; hinglish: string; checklist: string[] }> = {
+          // Fuel and Air Metering
+          "P0100": { issue: "Mass or Volume Air Flow Circuit", urgency: "MEDIUM", hinglish: "Air flow sensor circuit mein problem hai. Engine ko sahi hawa measure nahi mil raha. MAF sensor clean kariye ya badl dijiye.", checklist: ["MAF Sensor", "Air Intake"] },
           "P0101": { issue: "Mass Air Flow (MAF) Sensor Circuit Range/Performance", urgency: "MEDIUM", hinglish: "Hawa ka meter (MAF sensor) sahi se kaam nahi kar raha. Sensor ko clean kariye ya badal dijiye. Yeh issue fuel mixture mein problem create karta hai.", checklist: ["MAF Sensor", "Air Filter", "Intake Hose"] },
+          "P0102": { issue: "Mass Air Flow (MAF) Sensor Circuit Low Input", urgency: "MEDIUM", hinglish: "MAF sensor ka signal bahut kam hai. Sensor kharab ya wiring loose hai. Engine performance affected hoga.", checklist: ["MAF Sensor", "Wiring"] },
+          "P0103": { issue: "Mass Air Flow (MAF) Sensor Circuit High Input", urgency: "MEDIUM", hinglish: "MAF sensor ka signal bahut zyada hai. Sensor assembly ya wiring mein short circuit hai.", checklist: ["MAF Sensor", "Wiring Check"] },
+          "P0110": { issue: "Intake Air Temperature (IAT) Sensor Circuit", urgency: "LOW", hinglish: "Intake hawa temperature sensor kaam nahi kar raha. Engine ko sahi temperature pata nahi lag raha.", checklist: ["IAT Sensor", "Sensor Connection"] },
           "P0115": { issue: "Engine Coolant Temperature Sensor Circuit", urgency: "HIGH", hinglish: "Temperature sensor ki wiring check kariye, connection loose lag raha hai ya sensor kharab hai. Engine ko pata nahi lag raha ki kitna garam hai.", checklist: ["Sensor Connection", "Wiring", "Temperature Sensor"] },
-          "P0128": { issue: "Coolant Thermostat Circuit", urgency: "MEDIUM", hinglish: "Thermostat theek se kaam nahi kar raha. Engine temperature sahi se regulate nahi ho raha. Thermostat badlana pad sakta hai.", checklist: ["Thermostat", "Coolant Level", "Radiator Fan"] },
-          "P0134": { issue: "O2 Sensor Circuit No Activity (Bank 1 Sensor 1)", urgency: "HIGH", hinglish: "Oxygen sensor ka signal ECU ko nahi aa raha. Sensor ya wiring kharab hai. Engine ne oxygen level measure nahi kar sakta.", checklist: ["Oxygen Sensor", "Sensor Connector", "Wiring Harness"] },
+          "P0116": { issue: "Engine Coolant Temperature Sensor Range/Performance", urgency: "MEDIUM", hinglish: "Coolant sensor reading sahi nahi aa raha. Sensor ya thermostat mein problem hai.", checklist: ["Coolant Sensor", "Thermostat"] },
+          
+          // Fuel Injection
           "P0171": { issue: "System Too Lean (Bank 1)", urgency: "HIGH", hinglish: "Engine ka fuel mixture bahut patla hai - zyada hawa aur kam petrol. Oxygen sensor, fuel injector, ya fuel pressure check kariye.", checklist: ["Oxygen Sensor", "Fuel Injector", "Fuel Pressure"] },
+          "P0172": { issue: "System Too Rich (Bank 1)", urgency: "HIGH", hinglish: "Fuel mixture bahut patla hai - kam hawa aur zyada petrol. Engine ko zyada fuel mil raha hai. Air filter, oxygen sensor ya injectors check kariye.", checklist: ["Air Filter", "Oxygen Sensor", "Fuel Injector"] },
+          "P0174": { issue: "System Too Lean (Bank 2)", urgency: "HIGH", hinglish: "Bank 2 mein fuel mixture patla hai. Oxygen sensor ya fuel pressure issue ho sakta hai.", checklist: ["Oxygen Sensor Bank 2", "Fuel Pressure"] },
+          "P0175": { issue: "System Too Rich (Bank 2)", urgency: "HIGH", hinglish: "Bank 2 mein fuel mixture zyada hai. Fuel injector ya air filter check kariye.", checklist: ["Air Filter", "Fuel Injector"] },
+          
+          // Ignition System
           "P0300": { issue: "Random/Multiple Cylinder Misfire Detected", urgency: "CRITICAL", hinglish: "Engine mein misfiring ho rahi hai. Spark plugs aur ignition coils check kariye. Fuel delivery ya compression mein issue ho sakti hai.", checklist: ["Spark Plugs", "Ignition Coils", "Fuel Injectors", "Compression Test"] },
           "P0301": { issue: "Cylinder 1 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 1 mein misfire problem hai. Spark plug, ignition coil, ya fuel injector badalna pad sakta hai.", checklist: ["Cylinder 1 Spark Plug", "Ignition Coil", "Fuel Injector"] },
           "P0302": { issue: "Cylinder 2 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 2 mein problem hai. Spark plug aur ignition coil check kariye.", checklist: ["Cylinder 2 Spark Plug", "Ignition Coil", "Fuel Injector"] },
           "P0303": { issue: "Cylinder 3 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 3 mein misfire ho rahi hai. Spark plug ya ignition coil check kariye.", checklist: ["Cylinder 3 Spark Plug", "Ignition Coil"] },
           "P0304": { issue: "Cylinder 4 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 4 mein problem hai. Spark plug aur ignition coil check kariye.", checklist: ["Cylinder 4 Spark Plug", "Ignition Coil"] },
+          "P0305": { issue: "Cylinder 5 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder 5 mein misfire ho rahi hai. Spark plug aur ignition coil check kariye.", checklist: ["Cylinder 5 Spark Plug", "Ignition Coil"] },
+          "P0306": { issue: "Cylinder 6 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder 6 mein problem hai. Spark plug, ignition coil check kariye.", checklist: ["Cylinder 6 Spark Plug", "Ignition Coil"] },
+          
+          // Emission System
+          "P0401": { issue: "EGR Flow Insufficient", urgency: "MEDIUM", hinglish: "EGR valve theek se kaam nahi kar raha. Emissions system mein problem hai. EGR valve clean kariye ya badl dijiye.", checklist: ["EGR Valve", "EGR Passages"] },
+          "P0402": { issue: "EGR Flow Excessive", urgency: "MEDIUM", hinglish: "EGR flow bahut zyada hai. Engine performance kam ho jayega. EGR valve stuck hai.", checklist: ["EGR Valve", "Carbon Deposits"] },
           "P0420": { issue: "Catalyst System Efficiency Below Threshold (Bank 1)", urgency: "HIGH", hinglish: "Catalytic converter theek se kaam nahi kar raha. Converter choke ho gaya hai ya efficiency kam ho gayi hai. O2 sensors check kariye pehle.", checklist: ["Oxygen Sensor", "Catalytic Converter", "Exhaust"] },
           "P0430": { issue: "Catalyst System Efficiency Below Threshold (Bank 2)", urgency: "HIGH", hinglish: "Dusre side ka catalytic converter problem hai. Exhaust system check kariye.", checklist: ["Oxygen Sensor", "Catalytic Converter"] },
           "P0440": { issue: "Evaporative Emission System Malfunction", urgency: "MEDIUM", hinglish: "Fuel vapour system mein leak hai. Petrol ka fuel cap loose ya kharab hai, ya fuel tank mein problem hai.", checklist: ["Fuel Cap", "Fuel Tank", "Fuel Lines"] },
+          "P0442": { issue: "Evaporative Emission System Leak Detected (Small)", urgency: "LOW", hinglish: "Fuel tank ke vapour system mein chota leak hai. Fuel cap check kariye ya fuel lines check kariye.", checklist: ["Fuel Cap", "Vapor Lines"] },
+          "P0455": { issue: "Evaporative Emission System Leak Detected (Gross)", urgency: "MEDIUM", hinglish: "Fuel system mein bada leak hai. Petrol smell aayega. Fuel tank aur lines check kariye.", checklist: ["Fuel Tank", "Fuel Lines", "Connections"] },
+          
+          // Oxygen Sensors
+          "P0130": { issue: "O2 Sensor Circuit (Bank 1 Sensor 1)", urgency: "HIGH", hinglish: "Oxygen sensor ka circuit kaam nahi kar raha. Engine ko exhaust oxygen level measure nahi mil raha.", checklist: ["O2 Sensor", "Sensor Connector"] },
+          "P0134": { issue: "O2 Sensor Circuit No Activity (Bank 1 Sensor 1)", urgency: "HIGH", hinglish: "Oxygen sensor ka signal ECU ko nahi aa raha. Sensor ya wiring kharab hai. Engine ne oxygen level measure nahi kar sakta.", checklist: ["Oxygen Sensor", "Sensor Connector", "Wiring Harness"] },
+          "P0135": { issue: "O2 Sensor Heater Circuit (Bank 1 Sensor 1)", urgency: "MEDIUM", hinglish: "Oxygen sensor ka heater kaam nahi kar raha. Sensor jaldi warm nahi hota. Heater circuit ya sensor check kariye.", checklist: ["O2 Sensor Heater", "Wiring"] },
+          "P0136": { issue: "O2 Sensor Circuit (Bank 1 Sensor 2)", urgency: "MEDIUM", hinglish: "Second oxygen sensor mein problem hai. Exhaust system downstream check kariye.", checklist: ["O2 Sensor 2", "Exhaust"] },
+          
+          // Cooling System
+          "P0128": { issue: "Coolant Thermostat Circuit", urgency: "MEDIUM", hinglish: "Thermostat theek se kaam nahi kar raha. Engine temperature sahi se regulate nahi ho raha. Thermostat badlana pad sakta hai.", checklist: ["Thermostat", "Coolant Level", "Radiator Fan"] },
+          
+          // Transmission
           "P0500": { issue: "Vehicle Speed Sensor Malfunction", urgency: "MEDIUM", hinglish: "Speed sensor kaam nahi kar raha. Speedometer nahi chalega aur transmission mein problem ho sakti hai.", checklist: ["Speed Sensor", "Sensor Connector"] },
+          "P0505": { issue: "Idle Air Control System Malfunction", urgency: "LOW", hinglish: "Engine idle speed theek nahi hai. Idle control valve clean kariye ya replace kariye.", checklist: ["IAC Valve", "Air Intake"] },
+          "P0510": { issue: "Idle Air Control System Malfunction", urgency: "LOW", hinglish: "Engine ka idle problem hai. Throttle position sensor check kariye.", checklist: ["Throttle Sensor", "Idle Control"] },
+          
+          // VVT System
+          "P0011": { issue: "Camshaft Position Timing Over-Advanced (Bank 1)", urgency: "MEDIUM", hinglish: "Camshaft timing sahi se set nahi hai. VVT system problem ho sakta hai. Oil quality check kariye.", checklist: ["VVT System", "Oil Quality", "Timing Chain"] },
+          "P0014": { issue: "Camshaft Position Timing Over-Retarded (Bank 2)", urgency: "MEDIUM", hinglish: "Bank 2 ka timing problem hai. VVT solenoid ya timing chain check kariye.", checklist: ["VVT Solenoid", "Timing"] },
+          
+          // Additional Common Codes
+          "P0016": { issue: "Crankshaft/Camshaft Position Correlation", urgency: "HIGH", hinglish: "Engine timing sahi se sync nahi hai. Timing chain ya sprockets loose ho sakte hain. Timing belt check kariye.", checklist: ["Timing Chain", "Crankshaft Sensor", "Camshaft Sensor"] },
+          "P0031": { issue: "O2 Sensor Heater Circuit Low (Bank 1 Sensor 1)", urgency: "MEDIUM", hinglish: "Oxygen sensor heater ka voltage kam hai. Heater circuit mein short hai. Wiring check kariye.", checklist: ["O2 Sensor", "Heater Wiring"] },
+          "P0037": { issue: "O2 Sensor Heater Circuit Low (Bank 2 Sensor 1)", urgency: "MEDIUM", hinglish: "Bank 2 oxygen sensor heater mein problem hai. Sensor ya wiring check kariye.", checklist: ["O2 Sensor Bank 2", "Wiring"] },
+          "P0050": { issue: "O2 Sensor Heater Circuit (Bank 2 Sensor 1)", urgency: "MEDIUM", hinglish: "Bank 2 sensor heater kaam nahi kar raha. Heater element ya circuit check kariye.", checklist: ["Heater Circuit", "O2 Sensor"] },
+          "P0101": { issue: "Mass Air Flow (MAF) Sensor Circuit Range/Performance", urgency: "MEDIUM", hinglish: "Hawa ka meter (MAF sensor) sahi se kaam nahi kar raha. Sensor ko clean kariye ya badal dijiye.", checklist: ["MAF Sensor", "Air Filter"] },
+          "P0131": { issue: "O2 Sensor Circuit (Bank 1 Sensor 1) Voltage Low", urgency: "HIGH", hinglish: "Oxygen sensor ka voltage bahut kam hai. Engine lean condition detect kar raha hai. Sensor ya wiring check kariye.", checklist: ["O2 Sensor", "Wiring Check"] },
+          "P0201": { issue: "Fuel Injector 1 Circuit", urgency: "MEDIUM", hinglish: "Number 1 fuel injector kaam nahi kar raha. Injector clean kariye ya replace kariye. Wiring check kariye.", checklist: ["Fuel Injector 1", "Injector Connector"] },
+          "P0202": { issue: "Fuel Injector 2 Circuit", urgency: "MEDIUM", hinglish: "Number 2 fuel injector problem hai. Injector check kariye.", checklist: ["Fuel Injector 2", "Injector Connector"] },
+          "P0203": { issue: "Fuel Injector 3 Circuit", urgency: "MEDIUM", hinglish: "Number 3 fuel injector kaam nahi kar raha. Clean kariye ya replace kariye.", checklist: ["Fuel Injector 3", "Connector"] },
+          "P0204": { issue: "Fuel Injector 4 Circuit", urgency: "MEDIUM", hinglish: "Number 4 fuel injector mein issue hai. Fuel injector circuit check kariye.", checklist: ["Fuel Injector 4", "Wiring"] },
+          "P0335": { issue: "Crankshaft Position Sensor Circuit", urgency: "CRITICAL", hinglish: "Crankshaft sensor signal nahi aa raha. Engine start nahi hoga. Sensor ya wiring check kariye. Yeh critical issue hai.", checklist: ["Crankshaft Sensor", "Sensor Connector", "Wiring"] },
+          "P0340": { issue: "Camshaft Position Sensor Circuit", urgency: "HIGH", hinglish: "Camshaft sensor kaam nahi kar raha. Engine timing sync nahi hai. Sensor check kariye aur clean kariye.", checklist: ["Camshaft Sensor", "Sensor Gap"] },
+          "P0505": { issue: "Idle Control System Malfunction", urgency: "LOW", hinglish: "Engine idle speed theek nahi hai. Idle control valve ya IAC clean kariye.", checklist: ["IAC Valve", "Throttle Body"] },
+          "P0606": { issue: "PCM/ECM Processor Fault", urgency: "CRITICAL", hinglish: "Engine computer (ECU/PCM) mein problem hai. Yeh bahut serious issue hai. Professional service leni padegi.", checklist: ["ECU Reset", "Professional Diagnosis"] },
+          "P0700": { issue: "Transmission Control System Malfunction", urgency: "HIGH", hinglish: "Transmission control system mein problem hai. Transmission fluid check kariye aur solenoids check kariye.", checklist: ["Transmission Fluid", "Solenoids"] },
+          "P0705": { issue: "Transmission Range Sensor Circuit", urgency: "HIGH", hinglish: "Transmission position sensor kaam nahi kar raha. Park/Reverse/Neutral positions detect nahi ho rahe. Sensor check kariye.", checklist: ["Range Sensor", "Transmission"] },
+          "P0730": { issue: "Automatic Transmission Control System", urgency: "MEDIUM", hinglish: "Automatic transmission control problem hai. Fluid level check kariye aur transmission cooler check kariye.", checklist: ["Transmission Fluid", "Transmission Lines"] },
+          "P0740": { issue: "Torque Converter Clutch Circuit", urgency: "MEDIUM", hinglish: "Torque converter clutch theek se kaam nahi kar raha. Transmission fluid check kariye. Solenoid replace karna pad sakta hai.", checklist: ["Torque Converter", "Transmission Solenoid"] },
         }
 
         // Create diagnostic reports from found codes
