@@ -594,23 +594,41 @@ export default function JarvisOBD2Scanner() {
     reader.onload = (event) => {
       try {
         const content = event.target?.result as string
-        console.log("[v0] File content received, length:", content.length)
-        console.log("[v0] First 500 chars:", content.substring(0, 500))
+        
+        // Clean content: remove special characters and extra spaces
+        const cleanContent = content.replace(/[^A-Za-z0-9\s\-:]/g, ' ').toUpperCase()
         
         // Try multiple patterns to find OBD2 fault codes
         let foundCodes: string[] = []
         
-        // Pattern 1: Standard format P0xxx or p0xxx
-        let pattern1 = /[Pp]\d{4}/g
-        foundCodes = content.match(pattern1) || []
-        console.log("[v0] Pattern 1 (P0xxx):", foundCodes.length > 0 ? foundCodes : "No match")
+        // Pattern 1: Standard format P0xxx
+        let pattern1 = /P\d{4}/g
+        foundCodes = (cleanContent.match(pattern1) || []).map(c => c.substring(0, 5))
         
         // Pattern 2: If pattern 1 failed, try with spaces: P 0xxx
         if (foundCodes.length === 0) {
-          let pattern2 = /[Pp]\s*0\s*\d{3}/g
-          const matches = content.match(pattern2) || []
-          foundCodes = matches.map(m => m.replace(/\s/g, '').toUpperCase())
-          console.log("[v0] Pattern 2 (with spaces):", foundCodes.length > 0 ? foundCodes : "No match")
+          let pattern2 = /P\s*0\s*\d{3}/g
+          const matches = cleanContent.match(pattern2) || []
+          foundCodes = matches.map(m => 'P' + m.replace(/\s/g, '').substring(0, 4))
+        }
+        
+        // Pattern 3: Try colon-separated format: P:0300 or P-0300
+        if (foundCodes.length === 0) {
+          let pattern3 = /P[\:\-\s]*0[\:\-\s]*\d{3}/g
+          const matches = cleanContent.match(pattern3) || []
+          foundCodes = matches.map(m => 'P' + m.replace(/[^\d]/g, '').substring(0, 4))
+        }
+        
+        // Remove duplicates and invalid codes
+        foundCodes = Array.from(new Set(foundCodes.filter(code => code.length === 5 && code.startsWith('P'))))
+        
+        if (!foundCodes || foundCodes.length === 0) {
+          addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
+          addLog(`[INFO] File should contain codes like: P0300, P0420, P0115, etc.`)
+          setUploadStatus("idle")
+          setDiagnosticReports([])
+          setAiAnalysis(null)
+          return
         }
         
         // Pattern 3: Try colon-separated format: P:0300 or P-0300
@@ -686,7 +704,6 @@ export default function JarvisOBD2Scanner() {
           fileInputRef.current.value = ""
         }
       } catch (error) {
-        console.error("[v0] Error processing file:", error)
         addLog(`[ERROR] File reading failed: ${error instanceof Error ? error.message : "Unknown error"}`)
         setUploadStatus("idle")
         setDiagnosticReports([])
@@ -700,7 +717,6 @@ export default function JarvisOBD2Scanner() {
     }
 
     reader.onerror = () => {
-      console.error("[v0] FileReader error:", reader.error)
       addLog(`[ERROR] Failed to read file`)
       setUploadStatus("idle")
       setDiagnosticReports([])
@@ -712,7 +728,6 @@ export default function JarvisOBD2Scanner() {
       }
     }
 
-    console.log("[v0] Starting file read for:", file.name, "Size:", file.size)
     reader.readAsText(file)
   }
 
