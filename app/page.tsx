@@ -636,20 +636,17 @@ export default function JarvisOBD2Scanner() {
           let pattern3 = /[Pp][\:\-\s]*0[\:\-\s]*\d{3}/g
           const matches = content.match(pattern3) || []
           foundCodes = matches.map(m => 'P' + m.replace(/[^\d]/g, '').substring(0, 4))
-          console.log("[v0] Pattern 3 (with separators):", foundCodes.length > 0 ? foundCodes : "No match")
         }
         
         // Pattern 4: Try any letter followed by 4 digits (generic DTC)
         if (foundCodes.length === 0) {
           let pattern4 = /[A-Za-z]\d{4}/g
           foundCodes = content.match(pattern4) || []
-          console.log("[v0] Pattern 4 (generic DTC):", foundCodes.length > 0 ? foundCodes : "No match")
         }
         
         if (!foundCodes || foundCodes.length === 0) {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
           addLog(`[INFO] File should contain codes like: P0300, P0420, P0115, etc.`)
-          addLog(`[DEBUG] File preview: ${content.substring(0, 150).replace(/\n/g, ' ')}...`)
           setUploadStatus("idle")
           setDiagnosticReports([])
           setAiAnalysis(null)
@@ -657,32 +654,45 @@ export default function JarvisOBD2Scanner() {
         }
 
         // Get unique codes and normalize them
-        const uniqueCodes = Array.from(new Set(foundCodes.map(code => code.toUpperCase())))
+        const uniqueCodes = Array.from(new Set(foundCodes.map(code => code.toUpperCase()).filter(c => c.startsWith('P'))))
         addLog(`[SUCCESS] ✓ Valid diagnostic file detected`)
-        addLog(`[SCAN] Found ${uniqueCodes.length} unique fault code(s): ${uniqueCodes.join(", ")}`)
+        addLog(`[SCAN] Found ${uniqueCodes.length} error code(s): ${uniqueCodes.join(", ")}`)
+
+        // Comprehensive OBD2 code to meaning map with Hinglish descriptions
+        const codeMap: Record<string, { issue: string; urgency: string; hinglish: string; checklist: string[] }> = {
+          "P0101": { issue: "Mass Air Flow (MAF) Sensor Circuit Range/Performance", urgency: "MEDIUM", hinglish: "Hawa ka meter (MAF sensor) sahi se kaam nahi kar raha. Sensor ko clean kariye ya badal dijiye. Yeh issue fuel mixture mein problem create karta hai.", checklist: ["MAF Sensor", "Air Filter", "Intake Hose"] },
+          "P0115": { issue: "Engine Coolant Temperature Sensor Circuit", urgency: "HIGH", hinglish: "Temperature sensor ki wiring check kariye, connection loose lag raha hai ya sensor kharab hai. Engine ko pata nahi lag raha ki kitna garam hai.", checklist: ["Sensor Connection", "Wiring", "Temperature Sensor"] },
+          "P0128": { issue: "Coolant Thermostat Circuit", urgency: "MEDIUM", hinglish: "Thermostat theek se kaam nahi kar raha. Engine temperature sahi se regulate nahi ho raha. Thermostat badlana pad sakta hai.", checklist: ["Thermostat", "Coolant Level", "Radiator Fan"] },
+          "P0134": { issue: "O2 Sensor Circuit No Activity (Bank 1 Sensor 1)", urgency: "HIGH", hinglish: "Oxygen sensor ka signal ECU ko nahi aa raha. Sensor ya wiring kharab hai. Engine ne oxygen level measure nahi kar sakta.", checklist: ["Oxygen Sensor", "Sensor Connector", "Wiring Harness"] },
+          "P0171": { issue: "System Too Lean (Bank 1)", urgency: "HIGH", hinglish: "Engine ka fuel mixture bahut patla hai - zyada hawa aur kam petrol. Oxygen sensor, fuel injector, ya fuel pressure check kariye.", checklist: ["Oxygen Sensor", "Fuel Injector", "Fuel Pressure"] },
+          "P0300": { issue: "Random/Multiple Cylinder Misfire Detected", urgency: "CRITICAL", hinglish: "Engine mein misfiring ho rahi hai. Spark plugs aur ignition coils check kariye. Fuel delivery ya compression mein issue ho sakti hai.", checklist: ["Spark Plugs", "Ignition Coils", "Fuel Injectors", "Compression Test"] },
+          "P0301": { issue: "Cylinder 1 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 1 mein misfire problem hai. Spark plug, ignition coil, ya fuel injector badalna pad sakta hai.", checklist: ["Cylinder 1 Spark Plug", "Ignition Coil", "Fuel Injector"] },
+          "P0302": { issue: "Cylinder 2 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 2 mein problem hai. Spark plug aur ignition coil check kariye.", checklist: ["Cylinder 2 Spark Plug", "Ignition Coil", "Fuel Injector"] },
+          "P0303": { issue: "Cylinder 3 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 3 mein misfire ho rahi hai. Spark plug ya ignition coil check kariye.", checklist: ["Cylinder 3 Spark Plug", "Ignition Coil"] },
+          "P0304": { issue: "Cylinder 4 Misfire Detected", urgency: "CRITICAL", hinglish: "Cylinder number 4 mein problem hai. Spark plug aur ignition coil check kariye.", checklist: ["Cylinder 4 Spark Plug", "Ignition Coil"] },
+          "P0420": { issue: "Catalyst System Efficiency Below Threshold (Bank 1)", urgency: "HIGH", hinglish: "Catalytic converter theek se kaam nahi kar raha. Converter choke ho gaya hai ya efficiency kam ho gayi hai. O2 sensors check kariye pehle.", checklist: ["Oxygen Sensor", "Catalytic Converter", "Exhaust"] },
+          "P0430": { issue: "Catalyst System Efficiency Below Threshold (Bank 2)", urgency: "HIGH", hinglish: "Dusre side ka catalytic converter problem hai. Exhaust system check kariye.", checklist: ["Oxygen Sensor", "Catalytic Converter"] },
+          "P0440": { issue: "Evaporative Emission System Malfunction", urgency: "MEDIUM", hinglish: "Fuel vapour system mein leak hai. Petrol ka fuel cap loose ya kharab hai, ya fuel tank mein problem hai.", checklist: ["Fuel Cap", "Fuel Tank", "Fuel Lines"] },
+          "P0500": { issue: "Vehicle Speed Sensor Malfunction", urgency: "MEDIUM", hinglish: "Speed sensor kaam nahi kar raha. Speedometer nahi chalega aur transmission mein problem ho sakti hai.", checklist: ["Speed Sensor", "Sensor Connector"] },
+        }
 
         // Create diagnostic reports from found codes
         const results: DiagnosticReport[] = uniqueCodes.map((code, index) => {
-          // Map common OBD2 codes to issues and urgency
-          const codeMap: Record<string, { issue: string; urgency: string; hinglish: string; checklist: string[] }> = {
-            "P0300": { issue: "Random Misfire", urgency: "CRITICAL", hinglish: "Sir, engine missing hai. Spark plugs aur ignition coils check kariye. Ye problem fuel delivery ya compression issue ki wajah se bhi ho sakti hai.", checklist: ["Plugs", "Coils", "Fuel Injectors"] },
-            "P0301": { issue: "Cylinder 1 Misfire", urgency: "CRITICAL", hinglish: "Cylinder 1 mein misfire ho raha hai. Spark plug, ignition coil, ya fuel injector check kariye.", checklist: ["Spark Plug", "Coil", "Injector"] },
-            "P0420": { issue: "Catalyst System Efficiency Below Threshold", urgency: "HIGH", hinglish: "Catalytic converter choke ho sakta hai ya efficiency kam ho gayi hai. Pehle O2 sensors check kariye.", checklist: ["O2 Sensor", "Cat Converter", "Exhaust"] },
-            "P0115": { issue: "Engine Coolant Temperature Sensor Circuit", urgency: "HIGH", hinglish: "Temperature sensor ki wiring check kariye, connection loose lag raha hai. Sensor bhi kharab ho sakta hai.", checklist: ["Check Pins", "Sensor", "Wiring"] },
-            "P0101": { issue: "Mass or Volume Air Flow Circuit Range/Performance", urgency: "MEDIUM", hinglish: "MAF sensor ko clean kariye ya replace kariye. Hawa ki supply check kariye.", checklist: ["MAF Sensor", "Air Filter", "Intake"] },
-            "P0171": { issue: "System Too Lean", urgency: "HIGH", hinglish: "Engine ka fuel mixture bahut patla hai. Oxygen sensor, fuel injector, ya fuel pressure check kariye.", checklist: ["O2 Sensor", "Fuel Injector", "Pressure"] },
-            "P0128": { issue: "Coolant Thermostat", urgency: "MEDIUM", hinglish: "Thermostat theek se kaam nahi kar raha. Engine temperature fluctuate ho raha hai.", checklist: ["Thermostat", "Coolant Level", "Fan"] },
-            "P0134": { issue: "O2 Sensor Circuit No Activity", urgency: "HIGH", hinglish: "Oxygen sensor kaam nahi kar raha. Sensor ko replace kariye ya wiring check kariye.", checklist: ["O2 Sensor", "Wiring", "Connector"] },
+          const codeInfo = codeMap[code]
+          
+          if (!codeInfo) {
+            return {
+              id: index + 1,
+              code,
+              issue: `Fault Code ${code}`,
+              hinglish: `Fault code ${code} detected in vehicle. Professional diagnosis required. Engine management system mein issue hai.`,
+              checklist: ["Professional Scan", "Service"],
+              urgency: "MEDIUM",
+            }
           }
 
-          const defaultIssue = { 
-            issue: `OBD2 Fault Code ${code}`, 
-            urgency: "MEDIUM", 
-            hinglish: `Diagnostic fault code ${code} detected. Professional diagnosis required.`,
-            checklist: ["Scan Tool", "Professional Service"]
-          }
-
-          const codeInfo = codeMap[code] || defaultIssue
+          addLog(`[CODE] ${code}: ${codeInfo.issue}`)
+          addLog(`[MEANING] ${codeInfo.hinglish}`)
 
           return {
             id: index + 1,
