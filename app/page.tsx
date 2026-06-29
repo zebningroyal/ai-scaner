@@ -594,10 +594,12 @@ export default function JarvisOBD2Scanner() {
     reader.onload = (event) => {
       try {
         const content = event.target?.result as string
+        console.log("[v0] File content received, length:", content.length)
         
         // Validate file - check if it contains OBD2 fault codes (P followed by 4 digits)
         const odbPattern = /[Pp]\d{4}/g
         const foundCodes = content.match(odbPattern)
+        console.log("[v0] Found OBD2 codes:", foundCodes)
         
         if (!foundCodes || foundCodes.length === 0) {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
@@ -650,21 +652,39 @@ export default function JarvisOBD2Scanner() {
         setUploadStatus("complete")
         addLog(`[ANALYSIS] Starting AI analysis of ${results.length} fault code(s)...`)
         runAiAnalysis(results.map((r) => r.code))
+        
+        // Reset file input so same file can be uploaded again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
       } catch (error) {
+        console.error("[v0] Error processing file:", error)
         addLog(`[ERROR] File reading failed: ${error instanceof Error ? error.message : "Unknown error"}`)
         setUploadStatus("idle")
         setDiagnosticReports([])
         setAiAnalysis(null)
+        
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
       }
     }
 
     reader.onerror = () => {
+      console.error("[v0] FileReader error:", reader.error)
       addLog(`[ERROR] Failed to read file`)
       setUploadStatus("idle")
       setDiagnosticReports([])
       setAiAnalysis(null)
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     }
 
+    console.log("[v0] Starting file read for:", file.name, "Size:", file.size)
     reader.readAsText(file)
   }
 
