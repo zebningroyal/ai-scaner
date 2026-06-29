@@ -595,15 +595,43 @@ export default function JarvisOBD2Scanner() {
       try {
         const content = event.target?.result as string
         console.log("[v0] File content received, length:", content.length)
+        console.log("[v0] First 500 chars:", content.substring(0, 500))
         
-        // Validate file - check if it contains OBD2 fault codes (P followed by 4 digits)
-        const odbPattern = /[Pp]\d{4}/g
-        const foundCodes = content.match(odbPattern)
-        console.log("[v0] Found OBD2 codes:", foundCodes)
+        // Try multiple patterns to find OBD2 fault codes
+        let foundCodes: string[] = []
+        
+        // Pattern 1: Standard format P0xxx or p0xxx
+        let pattern1 = /[Pp]\d{4}/g
+        foundCodes = content.match(pattern1) || []
+        console.log("[v0] Pattern 1 (P0xxx):", foundCodes.length > 0 ? foundCodes : "No match")
+        
+        // Pattern 2: If pattern 1 failed, try with spaces: P 0xxx
+        if (foundCodes.length === 0) {
+          let pattern2 = /[Pp]\s*0\s*\d{3}/g
+          const matches = content.match(pattern2) || []
+          foundCodes = matches.map(m => m.replace(/\s/g, '').toUpperCase())
+          console.log("[v0] Pattern 2 (with spaces):", foundCodes.length > 0 ? foundCodes : "No match")
+        }
+        
+        // Pattern 3: Try colon-separated format: P:0300 or P-0300
+        if (foundCodes.length === 0) {
+          let pattern3 = /[Pp][\:\-\s]*0[\:\-\s]*\d{3}/g
+          const matches = content.match(pattern3) || []
+          foundCodes = matches.map(m => 'P' + m.replace(/[^\d]/g, '').substring(0, 4))
+          console.log("[v0] Pattern 3 (with separators):", foundCodes.length > 0 ? foundCodes : "No match")
+        }
+        
+        // Pattern 4: Try any letter followed by 4 digits (generic DTC)
+        if (foundCodes.length === 0) {
+          let pattern4 = /[A-Za-z]\d{4}/g
+          foundCodes = content.match(pattern4) || []
+          console.log("[v0] Pattern 4 (generic DTC):", foundCodes.length > 0 ? foundCodes : "No match")
+        }
         
         if (!foundCodes || foundCodes.length === 0) {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
-          addLog(`[INFO] Valid diagnostic files must contain OBD2 codes (P0xxx format)`)
+          addLog(`[INFO] File should contain codes like: P0300, P0420, P0115, etc.`)
+          addLog(`[DEBUG] File preview: ${content.substring(0, 150).replace(/\n/g, ' ')}...`)
           setUploadStatus("idle")
           setDiagnosticReports([])
           setAiAnalysis(null)
