@@ -594,55 +594,53 @@ export default function JarvisOBD2Scanner() {
     reader.onload = (event) => {
       try {
         const content = event.target?.result as string
+        addLog(`[DEBUG] File size: ${content.length} bytes`)
         
-        // Clean content: remove special characters and extra spaces
-        const cleanContent = content.replace(/[^A-Za-z0-9\s\-:]/g, ' ').toUpperCase()
-        
-        // Try multiple patterns to find OBD2 fault codes
+        // Try to find any P followed by 4 digits in original content (case insensitive)
+        // This is the most flexible approach
         let foundCodes: string[] = []
         
-        // Pattern 1: Standard format P0xxx
-        let pattern1 = /P\d{4}/g
-        foundCodes = (cleanContent.match(pattern1) || []).map(c => c.substring(0, 5))
-        
-        // Pattern 2: If pattern 1 failed, try with spaces: P 0xxx
-        if (foundCodes.length === 0) {
-          let pattern2 = /P\s*0\s*\d{3}/g
-          const matches = cleanContent.match(pattern2) || []
-          foundCodes = matches.map(m => 'P' + m.replace(/\s/g, '').substring(0, 4))
+        // Look for P0xxx, P1xxx, P2xxx, P3xxx (any P code format)
+        const matches = content.match(/[Pp][0-3]\d{3}/g) || []
+        if (matches.length > 0) {
+          foundCodes = matches.map(code => code.toUpperCase())
+          addLog(`[FOUND] Detected ${foundCodes.length} codes with pattern P[0-3]xxx`)
         }
         
-        // Pattern 3: Try colon-separated format: P:0300 or P-0300
+        // If no matches, try looking for just P followed by any 4 digits
         if (foundCodes.length === 0) {
-          let pattern3 = /P[\:\-\s]*0[\:\-\s]*\d{3}/g
-          const matches = cleanContent.match(pattern3) || []
-          foundCodes = matches.map(m => 'P' + m.replace(/[^\d]/g, '').substring(0, 4))
+          const broadMatches = content.match(/[Pp]\d{4}/g) || []
+          if (broadMatches.length > 0) {
+            foundCodes = broadMatches.map(code => code.toUpperCase())
+            addLog(`[FOUND] Detected ${foundCodes.length} codes with pattern Pxxxx`)
+          }
         }
         
-        // Remove duplicates and invalid codes
-        foundCodes = Array.from(new Set(foundCodes.filter(code => code.length === 5 && code.startsWith('P'))))
+        // If still no matches, try with spaces or separators
+        if (foundCodes.length === 0) {
+          const spaceMatches = content.match(/[Pp]\s*[0-3]\s*\d\s*\d\s*\d/g) || []
+          if (spaceMatches.length > 0) {
+            foundCodes = spaceMatches.map(code => 'P' + code.replace(/[^0-9]/g, '').substring(0, 4))
+            addLog(`[FOUND] Detected ${foundCodes.length} codes with spaces`)
+          }
+        }
+        
+        // Remove duplicates
+        foundCodes = Array.from(new Set(foundCodes))
         
         if (!foundCodes || foundCodes.length === 0) {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
-          addLog(`[INFO] File should contain codes like: P0300, P0420, P0115, etc.`)
+          addLog(`[INFO] File should contain codes like: P0300, P0420, P0115`)
+          // Show file content for debugging
+          const preview = content.substring(0, 500).split('\n').slice(0, 5).join(' | ')
+          addLog(`[DEBUG] File preview: ${preview}`)
           setUploadStatus("idle")
           setDiagnosticReports([])
           setAiAnalysis(null)
           return
         }
         
-        // Pattern 3: Try colon-separated format: P:0300 or P-0300
-        if (foundCodes.length === 0) {
-          let pattern3 = /[Pp][\:\-\s]*0[\:\-\s]*\d{3}/g
-          const matches = content.match(pattern3) || []
-          foundCodes = matches.map(m => 'P' + m.replace(/[^\d]/g, '').substring(0, 4))
-        }
-        
-        // Pattern 4: Try any letter followed by 4 digits (generic DTC)
-        if (foundCodes.length === 0) {
-          let pattern4 = /[A-Za-z]\d{4}/g
-          foundCodes = content.match(pattern4) || []
-        }
+        addLog(`[SUCCESS] ✓ Codes found: ${foundCodes.join(", ")}`)
         
         if (!foundCodes || foundCodes.length === 0) {
           addLog(`[ERROR] ⚠️ WRONG FILE - No valid OBD2 codes detected`)
