@@ -719,6 +719,7 @@ export default function JarvisOBD2Scanner() {
         }
 
         // Create diagnostic reports from found codes
+        const uniqueCodes = Array.from(new Set(foundCodes))
         const results: DiagnosticReport[] = uniqueCodes.map((code, index) => {
           const codeInfo = codeMap[code]
           
