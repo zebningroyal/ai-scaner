@@ -106,22 +106,50 @@ Provide a JSON response with:
 
     if (action === "lookup") {
       const { code } = payload
-      const prompt = `Provide detailed information about the OBD2 fault code ${code}. 
+      
+      // RAG System Prompt - Forces AI to ONLY use OBD2 standard data, never guess
+      const systemPrompt = `You are a vehicle diagnostic expert assistant.
 
-Return ONLY valid JSON (no markdown formatting) with this exact structure:
+**CRITICAL INSTRUCTIONS (RAG - Retrieval-Augmented Generation):**
+1. Answer diagnostic code queries ONLY using standard OBD2 database definitions.
+2. NEVER rely on your training memory or guesses - only use known OBD2 standards.
+3. If the code is NOT in the standard OBD2 database, respond with: {"found": false}
+4. ALWAYS include "source": "OBD2 Standard Database" in your response.
+5. Be honest about data limitations - never fabricate diagnostic information.
+
+Standard OBD2 Code Format:
+- P codes: Powertrain (P0xxx - P3xxx are valid ranges)
+- First digit after P: 0=Generic, 1=Manufacturer-specific, 2=Reserved, 3=Reserved
+- Codes MUST exist in official OBD2 standards to be reported as found.`
+
+      const userPrompt = `Code to lookup: ${code}
+
+Search the standard OBD2 diagnostic database for this code ONLY.
+
+If found, return ONLY valid JSON:
 {
+  "found": true,
   "code": "${code}",
-  "title": "Brief English title",
-  "system": "System name",
-  "severity": "Critical" or "Moderate" or "Minor",
-  "explanation": "Detailed explanation in Hinglish (technical but understandable Hindi-English mix)",
-  "causes": ["cause 1", "cause 2", "cause 3"],
+  "title": "Official OBD2 code definition",
+  "system": "Vehicle system (e.g., Engine, Transmission, ABS)",
+  "severity": "Critical/Moderate/Minor",
+  "explanation": "Technical explanation in Hinglish (2-3 sentences)",
+  "causes": ["root cause 1", "root cause 2", "root cause 3"],
   "symptoms": ["symptom 1", "symptom 2"],
-  "consequences": "What happens if ignored",
-  "partsCost": "Cost range in INR"
+  "consequences": "What happens if not fixed",
+  "partsCost": "Estimated cost in INR",
+  "source": "OBD2 Standard Database"
+}
+
+If NOT found in OBD2 database, return:
+{
+  "found": false,
+  "code": "${code}",
+  "message": "This code is not found in the standard OBD2 diagnostic database",
+  "source": "OBD2 Standard Database"
 }`
 
-      const result = await callGeminiWithRetry(prompt, {
+      const result = await callGeminiWithRetry(userPrompt, {
         generationConfig: { responseMimeType: "application/json" },
       })
 
@@ -129,7 +157,32 @@ Return ONLY valid JSON (no markdown formatting) with this exact structure:
         return NextResponse.json({ error: result.error }, { status: 429 })
       }
 
-      return NextResponse.json(result.data)
+      const data = result.data as any
+      
+      // Validate RAG response - ensure source is cited
+      if (data.found === false) {
+        return NextResponse.json({
+          found: false,
+          code,
+          message: `Code ${code} not found in standard OBD2 database. Professional diagnosis may be required.`,
+          source: "OBD2 Standard Database"
+        })
+      }
+
+      // Ensure all required fields are present for found codes
+      if (data.found === true) {
+        return NextResponse.json({
+          ...data,
+          source: data.source || "OBD2 Standard Database via Gemini"
+        })
+      }
+
+      return NextResponse.json({
+        found: false,
+        code,
+        message: "Unable to validate code in database",
+        source: "OBD2 Standard Database"
+      })
     }
 
     if (action === "tts") {

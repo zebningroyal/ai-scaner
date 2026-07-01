@@ -824,16 +824,36 @@ export default function JarvisOBD2Scanner() {
         const codeData = await response.json()
 
         if (codeData.error) {
-          addLog(`[ERROR] Failed to lookup ${code}`)
+          addLog(`[ERROR] Failed to lookup ${code}: ${codeData.error}`)
           continue
         }
 
-        // Update the result with the fetched data
+        // Handle RAG response - check if code was found in database
+        if (codeData.found === false) {
+          addLog(`[WARNING] ${code} not found in OBD2 database`)
+          addLog(`[INFO] ${codeData.message}`)
+          
+          const resultIndex = results.findIndex(r => r.code === code)
+          if (resultIndex !== -1) {
+            results[resultIndex] = {
+              ...results[resultIndex],
+              issue: `${code} - Not in Standard Database`,
+              hinglish: codeData.message || `Code ${code} is not found in the standard OBD2 diagnostic database. Professional diagnosis may be required.`,
+              checklist: ["Professional Diagnostic", "Vehicle Manual"],
+              urgency: "MEDIUM",
+              needsLookup: false,
+            }
+            setDiagnosticReports([...results])
+          }
+          continue
+        }
+
+        // Update with found code data
         const resultIndex = results.findIndex(r => r.code === code)
         if (resultIndex !== -1) {
           results[resultIndex] = {
             ...results[resultIndex],
-            issue: codeData.title || codeData.issue,
+            issue: codeData.title || `${code} - Lookup Successful`,
             hinglish: codeData.explanation,
             checklist: codeData.causes || [],
             urgency: codeData.severity === "Critical" ? "CRITICAL" : 
@@ -844,9 +864,10 @@ export default function JarvisOBD2Scanner() {
           setDiagnosticReports([...results])
           addLog(`[SUCCESS] ✓ ${code}: ${codeData.title}`)
           addLog(`[MEANING] ${codeData.explanation}`)
+          addLog(`[SOURCE] ${codeData.source || "OBD2 Standard Database"}`)
         }
       } catch (error) {
-        addLog(`[ERROR] Lookup failed for ${code}`)
+        addLog(`[ERROR] Lookup failed for ${code}: ${error instanceof Error ? error.message : "Unknown error"}`)
       }
     }
   }
