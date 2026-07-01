@@ -104,6 +104,34 @@ Provide a JSON response with:
       return NextResponse.json(result.data)
     }
 
+    if (action === "lookup") {
+      const { code } = payload
+      const prompt = `Provide detailed information about the OBD2 fault code ${code}. 
+
+Return ONLY valid JSON (no markdown formatting) with this exact structure:
+{
+  "code": "${code}",
+  "title": "Brief English title",
+  "system": "System name",
+  "severity": "Critical" or "Moderate" or "Minor",
+  "explanation": "Detailed explanation in Hinglish (technical but understandable Hindi-English mix)",
+  "causes": ["cause 1", "cause 2", "cause 3"],
+  "symptoms": ["symptom 1", "symptom 2"],
+  "consequences": "What happens if ignored",
+  "partsCost": "Cost range in INR"
+}`
+
+      const result = await callGeminiWithRetry(prompt, {
+        generationConfig: { responseMimeType: "application/json" },
+      })
+
+      if (result.error) {
+        return NextResponse.json({ error: result.error }, { status: 429 })
+      }
+
+      return NextResponse.json(result.data)
+    }
+
     if (action === "tts") {
       const { text } = payload
       

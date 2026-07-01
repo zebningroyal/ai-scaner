@@ -722,32 +722,43 @@ export default function JarvisOBD2Scanner() {
         const results: DiagnosticReport[] = uniqueCodes.map((code, index) => {
           const codeInfo = codeMap[code]
           
-          if (!codeInfo) {
+          if (codeInfo) {
+            addLog(`[CODE] ${code}: ${codeInfo.issue}`)
+            addLog(`[MEANING] ${codeInfo.hinglish}`)
+
             return {
               id: index + 1,
               code,
-              issue: `Fault Code ${code}`,
-              hinglish: `Fault code ${code} detected in vehicle. Professional diagnosis required. Engine management system mein issue hai.`,
-              checklist: ["Professional Scan", "Service"],
-              urgency: "MEDIUM",
+              issue: codeInfo.issue,
+              hinglish: codeInfo.hinglish,
+              checklist: codeInfo.checklist,
+              urgency: codeInfo.urgency,
             }
-          }
-
-          addLog(`[CODE] ${code}: ${codeInfo.issue}`)
-          addLog(`[MEANING] ${codeInfo.hinglish}`)
-
-          return {
-            id: index + 1,
-            code,
-            issue: codeInfo.issue,
-            hinglish: codeInfo.hinglish,
-            checklist: codeInfo.checklist,
-            urgency: codeInfo.urgency,
+          } else {
+            // Code not in database - will lookup via API
+            addLog(`[API] Looking up ${code} via Gemini...`)
+            return {
+              id: index + 1,
+              code,
+              issue: `Loading...`,
+              hinglish: `Fetching information for ${code}...`,
+              checklist: [],
+              urgency: "MEDIUM",
+              needsLookup: true,
+            }
           }
         })
 
         setDiagnosticReports(results)
         setUploadStatus("complete")
+        
+        // Lookup any codes that need it
+        const codesNeedingLookup = results.filter((r: any) => r.needsLookup).map((r: any) => r.code)
+        if (codesNeedingLookup.length > 0) {
+          addLog(`[API] Fetching details for ${codesNeedingLookup.length} unknown code(s)...`)
+          lookupUnknownCodes(codesNeedingLookup, results)
+        }
+        
         addLog(`[ANALYSIS] Starting AI analysis of ${results.length} fault code(s)...`)
         runAiAnalysis(results.map((r) => r.code))
         
@@ -798,6 +809,45 @@ export default function JarvisOBD2Scanner() {
       case "HIGH": return "bg-orange-500/10 border-orange-500/30"
       case "MEDIUM": return "bg-yellow-500/10 border-yellow-500/30"
       default: return "bg-blue-500/10 border-blue-500/30"
+    }
+  }
+
+  const lookupUnknownCodes = async (codes: string[], results: DiagnosticReport[]) => {
+    for (const code of codes) {
+      try {
+        const response = await fetch("/api/gemini", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "lookup", payload: { code } }),
+        })
+
+        const codeData = await response.json()
+
+        if (codeData.error) {
+          addLog(`[ERROR] Failed to lookup ${code}`)
+          continue
+        }
+
+        // Update the result with the fetched data
+        const resultIndex = results.findIndex(r => r.code === code)
+        if (resultIndex !== -1) {
+          results[resultIndex] = {
+            ...results[resultIndex],
+            issue: codeData.title || codeData.issue,
+            hinglish: codeData.explanation,
+            checklist: codeData.causes || [],
+            urgency: codeData.severity === "Critical" ? "CRITICAL" : 
+                     codeData.severity === "Moderate" ? "MEDIUM" : "HIGH",
+            needsLookup: false,
+          }
+          
+          setDiagnosticReports([...results])
+          addLog(`[SUCCESS] ✓ ${code}: ${codeData.title}`)
+          addLog(`[MEANING] ${codeData.explanation}`)
+        }
+      } catch (error) {
+        addLog(`[ERROR] Lookup failed for ${code}`)
+      }
     }
   }
 
