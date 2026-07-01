@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { parseFile } from "@/lib/fileParser"
 import {
   Activity,
   Zap,
@@ -581,7 +582,7 @@ export default function JarvisOBD2Scanner() {
     speakText(fullScript, "FULL_REPORT")
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     
@@ -589,46 +590,62 @@ export default function JarvisOBD2Scanner() {
     setDiagnosticReports([])
     setAiAnalysis(null)
     addLog(`[UPLINK] Processing ${file.name}...`)
+    addLog(`[FILE TYPE] ${file.type || "Unknown"} | Size: ${(file.size / 1024).toFixed(2)} KB`)
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string
-        
-        // Intelligent scanner to find OBD2 codes anywhere in the file
-        // OBD2 codes are always: P (or U, C, B) followed by 4 digits (0-3 for first digit after letter)
-        let allMatches: string[] = []
-        
-        // Pattern 1: Standard OBD2 codes P0000-P3999 (most common)
-        const pattern1 = content.match(/\b[Pp][0-3]\d{3}\b/g) || []
-        allMatches.push(...pattern1)
-        
-        // Pattern 2: Codes with separators (P-0300, P:0300, P 0300)
-        const pattern2 = content.match(/\b[Pp][\s\-:]*[0-3][\s\-:]*\d[\s\-:]*\d[\s\-:]*\d\b/g) || []
-        allMatches.push(...pattern2.map(m => 'P' + m.replace(/[^0-9]/g, '').substring(0, 4)))
-        
-        // Pattern 3: Any P code format in parentheses or brackets like (P0300), [P0420]
-        const pattern3 = content.match(/[(\[]*[Pp][0-3]\d{3}[)\]]*/g) || []
-        allMatches.push(...pattern3.map(m => m.replace(/[^\w]/g, '').substring(0, 5)))
-        
-        // Pattern 4: Codes in lists like "1. P0300" or "- P0420" or "• P0115"
-        const pattern4 = content.match(/[\d\.\-\*•\s]+([Pp][0-3]\d{3})/g) || []
-        allMatches.push(...pattern4.map(m => m.match(/[Pp][0-3]\d{3}/)?.[0] || ''))
-        
-        // Pattern 5: Codes followed by descriptions "P0300 Random Misfire" or "P0420: Catalyst"
-        const pattern5 = content.match(/[Pp][0-3]\d{3}(?=\s|:|$|-)/g) || []
-        allMatches.push(...pattern5)
-        
-        // Normalize: convert to uppercase, remove non-code characters, filter valid codes
-        let foundCodes = allMatches
-          .map(code => {
-            const normalized = code.replace(/[^\w]/g, '').substring(0, 5).toUpperCase()
-            return normalized.match(/^P\d{4}$/) ? normalized : ''
-          })
-          .filter(code => code.length > 0)
-        
-        // Remove duplicates
-        foundCodes = Array.from(new Set(foundCodes))
+    try {
+      // Parse the file using the universal parser
+      const parsed = await parseFile(file)
+      
+      if (!parsed.success) {
+        addLog(`[ERROR] ${parsed.message}`)
+        setUploadStatus("idle")
+        setDiagnosticReports([])
+        setAiAnalysis(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+        return
+      }
+
+      addLog(`[PARSED] File type: ${parsed.fileType} | Content length: ${parsed.content.length} characters`)
+      addLog(`[INFO] ${parsed.message}`)
+
+      const content = parsed.content
+      
+      // Intelligent scanner to find OBD2 codes anywhere in the file
+      // OBD2 codes are always: P (or U, C, B) followed by 4 digits (0-3 for first digit after letter)
+      let allMatches: string[] = []
+      
+      // Pattern 1: Standard OBD2 codes P0000-P3999 (most common)
+      const pattern1 = content.match(/\b[Pp][0-3]\d{3}\b/g) || []
+      allMatches.push(...pattern1)
+      
+      // Pattern 2: Codes with separators (P-0300, P:0300, P 0300)
+      const pattern2 = content.match(/\b[Pp][\s\-:]*[0-3][\s\-:]*\d[\s\-:]*\d[\s\-:]*\d\b/g) || []
+      allMatches.push(...pattern2.map(m => 'P' + m.replace(/[^0-9]/g, '').substring(0, 4)))
+      
+      // Pattern 3: Any P code format in parentheses or brackets like (P0300), [P0420]
+      const pattern3 = content.match(/[(\[]*[Pp][0-3]\d{3}[)\]]*/g) || []
+      allMatches.push(...pattern3.map(m => m.replace(/[^\w]/g, '').substring(0, 5)))
+      
+      // Pattern 4: Codes in lists like "1. P0300" or "- P0420" or "• P0115"
+      const pattern4 = content.match(/[\d\.\-\*•\s]+([Pp][0-3]\d{3})/g) || []
+      allMatches.push(...pattern4.map(m => m.match(/[Pp][0-3]\d{3}/)?.[0] || ''))
+      
+      // Pattern 5: Codes followed by descriptions "P0300 Random Misfire" or "P0420: Catalyst"
+      const pattern5 = content.match(/[Pp][0-3]\d{3}(?=\s|:|$|-)/g) || []
+      allMatches.push(...pattern5)
+      
+      // Normalize: convert to uppercase, remove non-code characters, filter valid codes
+      let foundCodes = allMatches
+        .map(code => {
+          const normalized = code.replace(/[^\w]/g, '').substring(0, 5).toUpperCase()
+          return normalized.match(/^P\d{4}$/) ? normalized : ''
+        })
+        .filter(code => code.length > 0)
+      
+      // Remove duplicates
+      foundCodes = Array.from(new Set(foundCodes))
         
         // If we found codes, log success and proceed
         if (foundCodes.length > 0) {
