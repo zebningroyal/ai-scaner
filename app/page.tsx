@@ -602,52 +602,90 @@ export default function JarvisOBD2Scanner() {
     addLog(`[UPLINK] Processing ${file.name}...`)
 
     const reader = new FileReader()
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
-        const content = event.target?.result as string
+        let content = ""
         
-        // Intelligent scanner to find OBD2 codes anywhere in the file
-        // OBD2 codes are always: P (or U, C, B) followed by 4 digits (0-3 for first digit after letter)
+        // Handle PDF files
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+          addLog(`[SCAN] Extracting text from PDF file...`)
+          try {
+            // Extract text from PDF using a simple approach - just use the raw bytes
+            const arrayBuffer = event.target?.result as ArrayBuffer
+            const uint8Array = new Uint8Array(arrayBuffer)
+            content = new TextDecoder().decode(uint8Array)
+          } catch (pdfError) {
+            addLog(`[WARN] PDF parsing had issues, attempting text extraction...`)
+            content = event.target?.result as string
+          }
+        } else {
+          content = event.target?.result as string
+        }
+        
+        // Intelligent scanner to find ALL OBD2 code types: P, B, U, C codes
+        // OBD2 codes: P (Powertrain), B (Body), U (Network/Communication), C (Chassis)
         let allMatches: string[] = []
         
         // Convert to uppercase for easier matching
         const upperContent = content.toUpperCase()
         
-        // Pattern 1: Standard OBD2 codes P0000-P3999 (most common) - word boundaries
-        const pattern1 = upperContent.match(/\bP[0-3]\d{3}\b/g) || []
+        // Pattern 1: All OBD2 code types (P, B, U, C) followed by 4 hex digits
+        // B codes: B0000-B3999 (second digit 0-3, rest are hex digits including A-F)
+        // U codes: U0000-U0FFF (can have A-F)
+        // Format: X[digit][hex digit][hex digit][hex digit]
+        const pattern1 = upperContent.match(/\b[PBUC][0-9A-F]{4}\b/g) || []
         allMatches.push(...pattern1)
         
-        // Pattern 2: Codes without word boundaries (in text like "codeP0300is")
-        const pattern2 = upperContent.match(/P[0-3]\d{3}/g) || []
+        // Pattern 2: Codes without word boundaries
+        const pattern2 = upperContent.match(/[PBUC][0-9A-F]{4}/g) || []
         allMatches.push(...pattern2)
         
-        // Pattern 3: Codes with separators (P-0300, P:0300, P 0300)
-        const pattern3 = upperContent.match(/P[\s\-:]*[0-3][\s\-:]*\d[\s\-:]*\d[\s\-:]*\d/g) || []
-        allMatches.push(...pattern3.map(m => 'P' + m.replace(/[^0-9]/g, '').substring(0, 4)))
-        
-        // Pattern 4: Codes in parentheses or brackets like (P0300), [P0420]
-        const pattern4 = upperContent.match(/[(\[\{]*P[0-3]\d{3}[)\]\}]*/g) || []
-        allMatches.push(...pattern4.map(m => m.replace(/[^\w]/g, '').substring(0, 5)))
-        
-        // Pattern 5: Codes in lists like "1. P0300" or "- P0420" or "• P0115"
-        const pattern5 = upperContent.match(/[\d\.\-\*•\s]+P[0-3]\d{3}/g) || []
-        allMatches.push(...pattern5.map(m => {
-          const match = m.match(/P[0-3]\d{3}/)
-          return match ? match[0] : ''
+        // Pattern 3: Codes with separators (P-0300, B:3006, U-150F, etc)
+        const pattern3 = upperContent.match(/[PBUC][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F]/g) || []
+        allMatches.push(...pattern3.map(m => {
+          // Remove all separators
+          const cleaned = m.replace(/[\s\-:]/g, '')
+          return cleaned.match(/^[PBUC][0-9A-F]{4}$/) ? cleaned : ''
         }))
         
-        // Normalize: remove duplicates and invalid codes
+        // Pattern 4: Codes in lists like "1. P0300" or "- B2575" or "• U0164" or "9. C0300"
+        const pattern4 = upperContent.match(/[\d\.\-\*•\s]+[PBUC][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F]/g) || []
+        allMatches.push(...pattern4.map(m => {
+          const match = m.match(/[PBUC][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F][\s\-:]*[0-9A-F]/)
+          if (match) {
+            return match[0].replace(/[\s\-:]/g, '')
+          }
+          return ''
+        }))
+        
+        // Pattern 5: Codes followed by descriptions or in parentheses
+        const pattern5 = upperContent.match(/[PBUC][0-9A-F]{4}(?=\s|:|$|-|[)\]⠀])/g) || []
+        allMatches.push(...pattern5)
+        
+        // Normalize: remove duplicates and validate codes
         let foundCodes = allMatches
           .map(code => {
-            // Clean up the code - remove any non-alphanumeric except P
-            const cleaned = code.replace(/[^P0-9]/g, '').toUpperCase()
-            // Ensure it matches P followed by 4 digits
-            return cleaned.match(/^P\d{4}$/) ? cleaned : ''
+            // Clean up the code - remove spaces, dashes, colons
+            const cleaned = code.replace(/[\s\-:]/g, '').toUpperCase()
+            // Validate: must be exactly 5 characters: P/B/U/C followed by 4 hex digits (0-9, A-F)
+            if (cleaned.match(/^[PBUC][0-9A-F]{4}$/)) {
+              return cleaned
+            }
+            return ''
           })
           .filter(code => code.length > 0)
         
         // Remove duplicates
         foundCodes = Array.from(new Set(foundCodes))
+        
+        // Sort codes: P codes first, then B, U, C
+        foundCodes.sort((a, b) => {
+          const order: Record<string, number> = { 'P': 0, 'B': 1, 'U': 2, 'C': 3 }
+          const orderA = order[a[0]] || 99
+          const orderB = order[b[0]] || 99
+          if (orderA !== orderB) return orderA - orderB
+          return a.localeCompare(b)
+        })
         
         // If we found codes, log success and proceed
         if (foundCodes.length > 0) {
@@ -665,6 +703,24 @@ export default function JarvisOBD2Scanner() {
         // Create diagnostic reports from found codes
         // Comprehensive OBD2 code to meaning map with Hinglish descriptions
         const codeMap: Record<string, { issue: string; urgency: string; hinglish: string; checklist: string[] }> = {
+          // BODY (B) CODES - Chassis and Electrical Systems
+          "B2575": { issue: "Headlamps Control Circuit - Open", urgency: "MEDIUM", hinglish: "Headlamp circuit mein open connection hai. Light kaam nahi kar rahi. Bulb, wiring ya connector check kariye.", checklist: ["Headlamp Bulb", "Wiring", "Connector"] },
+          "B2699": { issue: "Right Headlamp Control Circuit - Open", urgency: "MEDIUM", hinglish: "Daayen taraf ka headlamp circuit open hai. Light nahi jalega. Bulb aur wiring check kariye.", checklist: ["Right Headlamp", "Wiring Connection"] },
+          "B3006": { issue: "Hood Ajar Circuit", urgency: "LOW", hinglish: "Hood sensor circuit mein problem hai. Engine hood properly close nahi ho raha ya sensor kharab hai.", checklist: ["Hood Sensor", "Latch Mechanism", "Wiring"] },
+          "B3125": { issue: "Driver Door Unlock Circuit - Short To Battery", urgency: "MEDIUM", hinglish: "Driver door ke unlock circuit mein short circuit hai. Door lock system mein problem hai. Wiring check kariye.", checklist: ["Door Lock Motor", "Wiring", "Relay"] },
+          "B3130": { issue: "All Doors Unlock Circuit - Short To Battery", urgency: "MEDIUM", hinglish: "Sab doors ke unlock circuit mein electrical short hai. Doors ko unlock karte waqt problem aa rahi hai.", checklist: ["Door Lock System", "Wiring Check", "Solenoid"] },
+          "B3135": { issue: "All Doors Lock Circuit - Short To Battery", urgency: "MEDIUM", hinglish: "Door lock circuit mein short circuit detected. Doors automatically lock ho rahe ho sakte hain ya nahi ho rahe. Electrical harness check kariye.", checklist: ["Lock Solenoid", "Wiring", "Relay Module"] },
+          "B3883": { issue: "License Plate Lamp Circuit", urgency: "LOW", hinglish: "License plate ke light circuit mein problem hai. Bulb ya wiring kharab hai. Light nahi jalegi police challan de sakta hai.", checklist: ["License Plate Bulb", "Wiring", "Socket"] },
+          "B3782": { issue: "Air Flow Control Rear Feedback Circuit - High Voltage/Open", urgency: "MEDIUM", hinglish: "HVAC ke rear air flow control circuit mein high voltage problem hai. Air conditioning sahi se kaam nahi karega. Climate control module check kariye.", checklist: ["HVAC Module", "Air Flow Sensor", "Wiring"] },
+          "B1325": { issue: "Control Module Power Circuit - Low Voltage", urgency: "MEDIUM", hinglish: "Module ko power supply kam mil raha hai. Voltage low hai. Battery voltage check kariye ya wiring connection theek kariye.", checklist: ["Battery Voltage", "Power Wiring", "Ground Connection"] },
+          "B0021": { issue: "Passenger Seat Side Air Bag Deployment Loop - High Resistance", urgency: "HIGH", hinglish: "Passenger side airbag circuit mein high resistance problem hai. Airbag sahi se deploy nahi hoga. Safety critical - professional service chahiye.", checklist: ["Airbag Module", "Wiring Check", "Professional Service"] },
+          
+          // NETWORK (U) CODES - Communication/Bus Issues
+          "U0028": { issue: "MOST Bus", urgency: "HIGH", hinglish: "MOST network bus communication kaam nahi kar raha. Entertainment, infotainment, ya climate control systems disconnect ho sakti hain.", checklist: ["Network Module", "Communication Harness", "Gateway Module"] },
+          "U0164": { issue: "Lost Communication with HVAC Control Module", urgency: "MEDIUM", hinglish: "Climate control system ka communication ECU se cut ho gaya hai. AC/heating sahi se kaam nahi karega. Gateway check kariye.", checklist: ["HVAC Module", "Communication Lines", "Gateway"] },
+          "U150F": { issue: "LIN Bus", urgency: "HIGH", hinglish: "LIN network communication problem hai. Integrated systems ko ek dusre se connect nahi kiye. Bus communication restore kariye.", checklist: ["LIN Bus", "Terminator Resistor", "Module Connectors"] },
+          "U15E1": { issue: "Lost Communication with Device on LIN Bus", urgency: "MEDIUM", hinglish: "LIN bus ke ek device se communication nahi aa raha. Multiple systems affected ho sakte hain. Module reset ya replacement chahiye.", checklist: ["LIN Device", "Communication", "Wiring"] },
+          
           // Fuel and Air Metering
           "P0100": { issue: "Mass or Volume Air Flow Circuit", urgency: "MEDIUM", hinglish: "Air flow sensor circuit mein problem hai. Engine ko sahi hawa measure nahi mil raha. MAF sensor clean kariye ya badl dijiye.", checklist: ["MAF Sensor", "Air Intake"] },
           "P0101": { issue: "Mass Air Flow (MAF) Sensor Circuit Range/Performance", urgency: "MEDIUM", hinglish: "Hawa ka meter (MAF sensor) sahi se kaam nahi kar raha. Sensor ko clean kariye ya badal dijiye. Yeh issue fuel mixture mein problem create karta hai.", checklist: ["MAF Sensor", "Air Filter", "Intake Hose"] },
@@ -989,7 +1045,7 @@ export default function JarvisOBD2Scanner() {
                   type="file" 
                   ref={fileInputRef} 
                   onChange={handleFileUpload} 
-                  accept=".txt,.log,.pdf,.obd,.csv" 
+                  accept=".pdf,.txt,.log,.obd,.csv,.xml" 
                   className="hidden" 
                 />
                 
