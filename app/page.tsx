@@ -135,6 +135,16 @@ function JarvisIntro({ onComplete }: { onComplete: () => void }) {
     }
   }, [])
 
+  // Auto-dismiss intro after boot complete
+  useEffect(() => {
+    if (bootComplete) {
+      const timer = setTimeout(() => {
+        handleStart()
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [bootComplete])
+
   return (
     <div className={`fixed inset-0 z-50 bg-[#020617] flex items-center justify-center transition-opacity duration-700 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
       {/* Background effects */}
@@ -434,6 +444,7 @@ export default function JarvisOBD2Scanner() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const logsEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -783,6 +794,38 @@ export default function JarvisOBD2Scanner() {
     reader.readAsText(file)
   }
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files?.length > 0) {
+      const file = files[0]
+      
+      // Create a synthetic event to pass to handleFileUpload
+      const syntheticEvent = {
+        target: {
+          files: files
+        }
+      } as React.ChangeEvent<HTMLInputElement>
+      
+      handleFileUpload(syntheticEvent)
+    }
+  }
+
   const getSeverityColor = (urgency: string) => {
     switch (urgency) {
       case "CRITICAL": return "from-red-500 to-red-600"
@@ -915,7 +958,9 @@ export default function JarvisOBD2Scanner() {
             <Panel title="Data Uplink" icon={Upload}>
               <div
                 className={`relative border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
-                  uploadStatus === "uploading"
+                  isDragOver
+                    ? "border-cyan-400 bg-cyan-500/20 scale-105"
+                    : uploadStatus === "uploading"
                     ? "border-cyan-400/50 bg-cyan-500/10 animate-pulse"
                     : uploadStatus === "complete" && diagnosticReports.length > 0
                     ? "border-green-500/50 bg-green-500/5"
@@ -928,8 +973,17 @@ export default function JarvisOBD2Scanner() {
                     fileInputRef.current?.click()
                   }
                 }}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileUpload} 
+                  accept=".txt,.log,.pdf,.obd,.csv" 
+                  className="hidden" 
+                />
                 
                 {uploadStatus === "uploading" ? (
                   <>
