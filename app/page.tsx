@@ -610,31 +610,39 @@ export default function JarvisOBD2Scanner() {
         // OBD2 codes are always: P (or U, C, B) followed by 4 digits (0-3 for first digit after letter)
         let allMatches: string[] = []
         
-        // Pattern 1: Standard OBD2 codes P0000-P3999 (most common)
-        const pattern1 = content.match(/\b[Pp][0-3]\d{3}\b/g) || []
+        // Convert to uppercase for easier matching
+        const upperContent = content.toUpperCase()
+        
+        // Pattern 1: Standard OBD2 codes P0000-P3999 (most common) - word boundaries
+        const pattern1 = upperContent.match(/\bP[0-3]\d{3}\b/g) || []
         allMatches.push(...pattern1)
         
-        // Pattern 2: Codes with separators (P-0300, P:0300, P 0300)
-        const pattern2 = content.match(/\b[Pp][\s\-:]*[0-3][\s\-:]*\d[\s\-:]*\d[\s\-:]*\d\b/g) || []
-        allMatches.push(...pattern2.map(m => 'P' + m.replace(/[^0-9]/g, '').substring(0, 4)))
+        // Pattern 2: Codes without word boundaries (in text like "codeP0300is")
+        const pattern2 = upperContent.match(/P[0-3]\d{3}/g) || []
+        allMatches.push(...pattern2)
         
-        // Pattern 3: Any P code format in parentheses or brackets like (P0300), [P0420]
-        const pattern3 = content.match(/[(\[]*[Pp][0-3]\d{3}[)\]]*/g) || []
-        allMatches.push(...pattern3.map(m => m.replace(/[^\w]/g, '').substring(0, 5)))
+        // Pattern 3: Codes with separators (P-0300, P:0300, P 0300)
+        const pattern3 = upperContent.match(/P[\s\-:]*[0-3][\s\-:]*\d[\s\-:]*\d[\s\-:]*\d/g) || []
+        allMatches.push(...pattern3.map(m => 'P' + m.replace(/[^0-9]/g, '').substring(0, 4)))
         
-        // Pattern 4: Codes in lists like "1. P0300" or "- P0420" or "• P0115"
-        const pattern4 = content.match(/[\d\.\-\*•\s]+([Pp][0-3]\d{3})/g) || []
-        allMatches.push(...pattern4.map(m => m.match(/[Pp][0-3]\d{3}/)?.[0] || ''))
+        // Pattern 4: Codes in parentheses or brackets like (P0300), [P0420]
+        const pattern4 = upperContent.match(/[(\[\{]*P[0-3]\d{3}[)\]\}]*/g) || []
+        allMatches.push(...pattern4.map(m => m.replace(/[^\w]/g, '').substring(0, 5)))
         
-        // Pattern 5: Codes followed by descriptions "P0300 Random Misfire" or "P0420: Catalyst"
-        const pattern5 = content.match(/[Pp][0-3]\d{3}(?=\s|:|$|-)/g) || []
-        allMatches.push(...pattern5)
+        // Pattern 5: Codes in lists like "1. P0300" or "- P0420" or "• P0115"
+        const pattern5 = upperContent.match(/[\d\.\-\*•\s]+P[0-3]\d{3}/g) || []
+        allMatches.push(...pattern5.map(m => {
+          const match = m.match(/P[0-3]\d{3}/)
+          return match ? match[0] : ''
+        }))
         
-        // Normalize: convert to uppercase, remove non-code characters, filter valid codes
+        // Normalize: remove duplicates and invalid codes
         let foundCodes = allMatches
           .map(code => {
-            const normalized = code.replace(/[^\w]/g, '').substring(0, 5).toUpperCase()
-            return normalized.match(/^P\d{4}$/) ? normalized : ''
+            // Clean up the code - remove any non-alphanumeric except P
+            const cleaned = code.replace(/[^P0-9]/g, '').toUpperCase()
+            // Ensure it matches P followed by 4 digits
+            return cleaned.match(/^P\d{4}$/) ? cleaned : ''
           })
           .filter(code => code.length > 0)
         
@@ -730,7 +738,7 @@ export default function JarvisOBD2Scanner() {
         }
 
         // Create diagnostic reports from found codes
-        const results: DiagnosticReport[] = uniqueCodes.map((code, index) => {
+        const results: DiagnosticReport[] = foundCodes.map((code, index) => {
           const codeInfo = codeMap[code]
           
           if (!codeInfo) {
