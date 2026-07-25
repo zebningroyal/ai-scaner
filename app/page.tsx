@@ -604,22 +604,37 @@ export default function JarvisOBD2Scanner() {
     const reader = new FileReader()
     reader.onload = async (event) => {
       try {
-        let content = ""
+        // For all file types, we read as text
+        // PDF text extraction works because we read the raw text content
+        let content = event.target?.result as string
         
-        // Handle PDF files
+        if (!content || content.trim().length === 0) {
+          addLog(`[ERROR] File is empty or unreadable`)
+          setUploadStatus("idle")
+          return
+        }
+        
+        // Handle PDF files - they're treated as text for extraction
         if (file.name.toLowerCase().endsWith('.pdf')) {
-          addLog(`[SCAN] Extracting text from PDF file...`)
-          try {
-            // Extract text from PDF using a simple approach - just use the raw bytes
-            const arrayBuffer = event.target?.result as ArrayBuffer
-            const uint8Array = new Uint8Array(arrayBuffer)
-            content = new TextDecoder().decode(uint8Array)
-          } catch (pdfError) {
-            addLog(`[WARN] PDF parsing had issues, attempting text extraction...`)
-            content = event.target?.result as string
-          }
+          addLog(`[SCAN] Extracting text from PDF...`)
+        }
+        
+        // Extract ONLY current/pre-repair codes (not historical ones)
+        // Look for "Pre-Repair" section and extract codes from there
+        let preRepairContent = content
+        
+        // Find the "Pre-Repair" or "System fault code【Pre-Repair】" section
+        const preRepairMatch = content.match(/(?:System fault code|DTC).*?【Pre-Repair】([\s\S]*?)(?:The following systems are OK|Systems.*?OK|Disclaimer|$)/i)
+        if (preRepairMatch) {
+          preRepairContent = preRepairMatch[1]
+          addLog(`[INFO] Extracting codes from Pre-Repair section...`)
         } else {
-          content = event.target?.result as string
+          // Fallback: try to find DTC section
+          const dtcMatch = content.match(/DTC\s*\((\d+)\)([\s\S]*?)(?:The following systems are OK|Systems.*?OK|Disclaimer|$)/i)
+          if (dtcMatch) {
+            preRepairContent = dtcMatch[2]
+            addLog(`[INFO] Found ${dtcMatch[1]} fault code(s)...`)
+          }
         }
         
         // Intelligent scanner to find ALL OBD2 code types: P, B, U, C codes
@@ -627,7 +642,7 @@ export default function JarvisOBD2Scanner() {
         let allMatches: string[] = []
         
         // Convert to uppercase for easier matching
-        const upperContent = content.toUpperCase()
+        const upperContent = preRepairContent.toUpperCase()
         
         // Pattern 1: All OBD2 code types (P, B, U, C) followed by 4 hex digits
         // B codes: B0000-B3999 (second digit 0-3, rest are hex digits including A-F)
@@ -764,6 +779,9 @@ export default function JarvisOBD2Scanner() {
           "P0128": { issue: "Coolant Thermostat Circuit", urgency: "MEDIUM", hinglish: "Thermostat theek se kaam nahi kar raha. Engine temperature sahi se regulate nahi ho raha. Thermostat badlana pad sakta hai.", checklist: ["Thermostat", "Coolant Level", "Radiator Fan"] },
           
           // Transmission
+          "P0731": { issue: "Gear 1 Incorrect Ratio", urgency: "MEDIUM", hinglish: "Transmission ka pehla gear sahi se kaam nahi kar raha. Gear ratio galat hai. Transmission fluid check kariye ya transmission specialist se miliye.", checklist: ["Transmission Fluid", "Solenoid", "Transmission"] },
+          "P0732": { issue: "Gear 2 Incorrect Ratio", urgency: "MEDIUM", hinglish: "Dusra gear (Gear 2) mein problem hai. Transmission control module ya solenoid kharab ho sakta hai. Transmission check kariye.", checklist: ["Transmission Fluid", "Solenoid", "TCM"] },
+          "P0733": { issue: "Gear 3 Incorrect Ratio", urgency: "MEDIUM", hinglish: "Tisra gear (Gear 3) mein gear ratio problem hai. Transmission mein internal wear ya pressure loss ho sakta hai. Professional transmission service chahiye.", checklist: ["Transmission Fluid", "Solenoid", "Internal Components"] },
           "P0500": { issue: "Vehicle Speed Sensor Malfunction", urgency: "MEDIUM", hinglish: "Speed sensor kaam nahi kar raha. Speedometer nahi chalega aur transmission mein problem ho sakti hai.", checklist: ["Speed Sensor", "Sensor Connector"] },
           "P0505": { issue: "Idle Air Control System Malfunction", urgency: "LOW", hinglish: "Engine idle speed theek nahi hai. Idle control valve clean kariye ya replace kariye.", checklist: ["IAC Valve", "Air Intake"] },
           "P0510": { issue: "Idle Air Control System Malfunction", urgency: "LOW", hinglish: "Engine ka idle problem hai. Throttle position sensor check kariye.", checklist: ["Throttle Sensor", "Idle Control"] },
